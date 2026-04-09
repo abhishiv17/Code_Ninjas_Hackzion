@@ -3,6 +3,7 @@
 import NodeMap from '@/components/NodeMap';
 import TelemetryGraph from '@/components/TelemetryGraph';
 import { useSimulationContext } from '@/contexts/SimulationContext';
+import { t } from '@/lib/translations';
 
 export default function Monitoring() {
   const { state } = useSimulationContext();
@@ -12,8 +13,8 @@ export default function Monitoring() {
     <div className="flex flex-col gap-6 h-full max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Live Monitoring</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Interactive geographical node tracking and live telemetry.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{t("monitoring")}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("interactive_geo_tracking")}</p>
         </div>
       </div>
 
@@ -27,22 +28,22 @@ export default function Monitoring() {
              <TelemetryGraph isSpiking={isSpiking} />
            </div>
            <div className="bg-card/40 border border-white/5 rounded-xl p-5 shadow-inner">
-             <h3 className="text-sm font-medium text-gray-300 mb-4 uppercase tracking-widest text-center">Status Summary</h3>
+             <h3 className="text-sm font-medium text-gray-300 mb-4 uppercase tracking-widest text-center">{t("status_summary")}</h3>
              <div className="space-y-4">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-400">Total Nodes</span>
+                  <span className="text-gray-400">{t("total_nodes")}</span>
                   <span className="text-gray-100 font-mono font-bold">50</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-400">Healthy</span>
+                  <span className="text-gray-400">{t("healthy")}</span>
                   <span className="text-green-400 font-mono font-bold">48</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-400">Warning</span>
+                  <span className="text-gray-400">{t("warning")}</span>
                   <span className="text-yellow-400 font-mono font-bold">1</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-400">Critical</span>
+                  <span className="text-gray-400">{t("critical")}</span>
                   <span className="text-red-400 font-mono font-bold">1</span>
                 </div>
              </div>
@@ -50,7 +51,7 @@ export default function Monitoring() {
              <div className="mt-8 pt-6 border-t border-white/10 text-center">
                <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                 <span className="text-xs text-green-400 font-medium">Sensors Active</span>
+                 <span className="text-xs text-green-400 font-medium">{t("sensors_active")}</span>
                </div>
              </div>
            </div>

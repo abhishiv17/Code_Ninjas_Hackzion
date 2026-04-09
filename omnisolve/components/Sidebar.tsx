@@ -4,14 +4,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Activity, Ticket, BookOpen, Terminal, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { t } from '@/lib/translations';
 
 const navItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { name: 'Live Monitoring', path: '/monitoring', icon: Activity },
-  { name: 'Incident Tickets', path: '/tickets', icon: Ticket },
-  { name: 'AI Diagnostics', path: '/ai', icon: ShieldAlert },
-  { name: 'Knowledge Base', path: '/knowledge', icon: BookOpen },
-  { name: 'System Logs', path: '/logs', icon: Terminal },
+  { key: 'dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { key: 'monitoring', path: '/monitoring', icon: Activity },
+  { key: 'incident_tickets', path: '/tickets', icon: Ticket },
+  { key: 'ai_diagnostics', path: '/ai', icon: ShieldAlert },
+  { key: 'knowledge_base', path: '/knowledge', icon: BookOpen },
+  { key: 'system_logs', path: '/logs', icon: Terminal },
 ];
 
 export default function Sidebar() {
@@ -25,19 +26,19 @@ export default function Sidebar() {
           <ShieldAlert className="w-4 h-4 text-blue-400" />
         </div>
         <div>
-          <h1 className="font-bold text-base tracking-wider text-white">OMNI<span className="text-blue-500">SOLVE</span></h1>
+          <h1 className="font-bold text-base tracking-wider text-white">CONTROL<span className="text-blue-500">GRID</span></h1>
         </div>
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2">
-        <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-2 mb-4">Command Center</div>
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-2 mb-4">{t("command_center")}</div>
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.path);
           return (
-            <Link key={item.name} href={item.path} className="block relative">
+            <Link key={item.key} href={item.path} className="block relative">
               <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative z-10 ${isActive ? 'text-blue-100' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}>
                 <item.icon className={`w-4 h-4 ${isActive ? 'text-blue-400' : ''}`} />
-                <span className="text-sm font-medium">{item.name}</span>
+                <span className="text-sm font-medium">{t(item.key)}</span>
               </div>
               {isActive && (
                 <motion.div 
@@ -60,7 +61,7 @@ export default function Sidebar() {
             <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
             <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
           </div>
-          <span className="text-xs font-medium text-gray-400">System Secure</span>
+          <span className="text-xs font-medium text-gray-400">{t("system_secure")}</span>
         </div>
       </div>
     </div>

@@ -29,14 +29,15 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       const res = await fetch("http://127.0.0.1:8000/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Use the description from mockTicket explicitly
         body: JSON.stringify({ ticket: mockTicket.description })
       });
-      if (!res.ok) throw new Error("API call failed");
+      if (!res.ok) {
+        throw new Error("API error");
+      }
       const data = await res.json();
       setApiAnalysis(data);
-    } catch (err: any) {
-      setApiError(err.message || "Failed to analyze");
+    } catch (error: any) {
+      setApiError("Failed to fetch");
     } finally {
       setIsApiLoading(false);
     }

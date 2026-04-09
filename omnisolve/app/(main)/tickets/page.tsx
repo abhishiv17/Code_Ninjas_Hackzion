@@ -6,6 +6,7 @@ import { mockTicket, Ticket } from '@/lib/mockData';
 import { FileClock, Settings2, ZapIcon, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { t } from '@/lib/translations';
 
 const historicalTickets: Ticket[] = [
   { id: 'TKT-8105', nodeId: 'N-045', type: 'Hardware', priority: 'High', description: 'Thermal threshold hit previously (Resolved)', timestamp: new Date(Date.now() - 86400000 * 2).toISOString() },
@@ -26,15 +27,15 @@ export default function Tickets() {
     <div className="flex flex-col h-full gap-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Incident Tickets</h2>
-          <p className="text-sm text-gray-400 mt-1">Manage, triage, and route active system alerts.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white">{t("tickets")}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t("manage_triage") || "Manage, triage, and route active system alerts."}</p>
         </div>
         <div className="flex gap-2">
             <button className="px-3 py-1.5 text-xs font-semibold bg-white/5 border border-white/10 rounded-md text-gray-300 hover:bg-white/10 transition flex items-center gap-2">
-                <FileClock className="w-3.5 h-3.5" /> History
+                <FileClock className="w-3.5 h-3.5" /> {t("history")}
             </button>
             <button className="px-3 py-1.5 text-xs font-semibold bg-white/5 border border-white/10 rounded-md text-gray-300 hover:bg-white/10 transition flex items-center gap-2">
-                <Settings2 className="w-3.5 h-3.5" /> Filter
+                <Settings2 className="w-3.5 h-3.5" /> {t("filter")}
             </button>
         </div>
       </div>
@@ -43,7 +44,7 @@ export default function Tickets() {
         
         {/* Ticket List */}
         <div className="lg:col-span-5 flex flex-col gap-4 overflow-hidden">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">Active / Pending</h3>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">{t("active_pending")}</h3>
           <div className="overflow-y-auto pr-2 space-y-4 pb-4">
              <AnimatePresence>
                 {showTicket ? (
@@ -58,12 +59,12 @@ export default function Tickets() {
                   </motion.div>
                 ) : (
                   <div className="py-10 text-center text-sm text-gray-500 border border-white/5 border-dashed rounded-xl">
-                    No active tickets currently.
+                    {t("no_tickets_available")}
                   </div>
                 )}
              </AnimatePresence>
 
-             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1 pt-4">Resolved Historical</h3>
+             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1 pt-4">{t("resolved_historical")}</h3>
              {historicalTickets.map(tkt => (
                  <div key={tkt.id} className="opacity-50 hover:opacity-80 transition-opacity cursor-pointer grayscale">
                      <TicketCard ticket={tkt} />
@@ -74,7 +75,7 @@ export default function Tickets() {
 
         {/* Ticket Details Side */}
         <div className="lg:col-span-7 flex flex-col gap-4 overflow-hidden">
-          <h3 className="text-xs font-semibold text-white uppercase tracking-widest px-1">Selected Ticket Details</h3>
+          <h3 className="text-xs font-semibold text-white uppercase tracking-widest px-1">{t("selected_ticket_details")}</h3>
           <div className="overflow-y-auto pr-2 pb-4 h-full">
              {showTicket ? (
                  <motion.div 
@@ -86,7 +87,7 @@ export default function Tickets() {
                       <div>
                         <h2 className="text-2xl font-bold text-white mb-2">{mockTicket.id}</h2>
                         <span className="inline-block px-3 py-1 bg-red-500/20 border border-red-500/30 text-red-400 rounded-full text-xs font-bold uppercase tracking-wider">
-                          {mockTicket.priority} Priority
+                          {t(mockTicket.priority.toLowerCase())} {t("priority")}
                         </span>
                       </div>
                       <span className="text-sm font-mono text-gray-400">{mockTicket.timestamp}</span>
@@ -94,48 +95,48 @@ export default function Tickets() {
 
                     <div className="space-y-6 mb-8">
                        <div>
-                         <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Issue Description</p>
+                         <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t("issue_description")}</p>
                          <p className="text-lg text-gray-200">{mockTicket.description}</p>
                        </div>
                        
                        <div className="grid grid-cols-2 gap-4">
                          <div className="bg-white/5 rounded-lg p-3">
-                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Affected Node</p>
+                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t("affected_node")}</p>
                            <p className="text-sm font-bold text-white">{mockTicket.nodeId}</p>
                          </div>
                          <div className="bg-white/5 rounded-lg p-3">
-                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Category</p>
-                           <p className="text-sm font-bold text-white">{mockTicket.type}</p>
+                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t("category")}</p>
+                           <p className="text-sm font-bold text-white">{t(mockTicket.type.toLowerCase())}</p>
                          </div>
                          <div className="bg-white/5 rounded-lg p-3">
-                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Location</p>
-                           <p className="text-sm font-bold text-white">{mockTicket.location || 'Unknown'}</p>
+                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t("location")}</p>
+                           <p className="text-sm font-bold text-white">{mockTicket.location || t("unknown")}</p>
                          </div>
                          <div className="bg-white/5 rounded-lg p-3">
-                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Sensor Source</p>
-                           <p className="text-sm font-bold text-white">{mockTicket.sensorType || 'N/A'}</p>
+                           <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t("sensor_source")}</p>
+                           <p className="text-sm font-bold text-white">{mockTicket.sensorType || t("na")}</p>
                          </div>
                        </div>
                     </div>
 
                     <div className="mt-auto bg-blue-900/10 border border-blue-500/20 rounded-xl p-5">
-                       <h4 className="text-sm font-medium text-blue-300 mb-3 text-center">Fast-Track Resolution</h4>
+                       <h4 className="text-sm font-medium text-blue-300 mb-3 text-center">{t("fast_track_resolution")}</h4>
                        <div className="flex gap-4">
                          <button 
                            onClick={handleForceAnalyze} 
                            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-semibold shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
                          >
-                           <ZapIcon className="w-4 h-4" /> Trigger AI Analysis
+                           <ZapIcon className="w-4 h-4" /> {t("analyze")}
                          </button>
                          <Link href="/ai" className="px-6 bg-white/5 hover:bg-white/10 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-all">
-                           Go to Diagnostics <ArrowRight className="w-4 h-4" />
+                           {t("go_to_diagnostics")} <ArrowRight className="w-4 h-4" />
                          </Link>
                        </div>
                     </div>
                  </motion.div>
              ) : (
                  <div className="h-full min-h-[400px] border border-white/5 border-dashed rounded-xl flex items-center justify-center text-gray-600 text-sm">
-                     Select an active ticket to view details
+                     {t("select_ticket_to_view")}
                  </div>
              )}
           </div>

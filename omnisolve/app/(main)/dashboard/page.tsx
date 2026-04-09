@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Target, ZapIcon, Thermometer, Ticket as TicketIcon } from 'lucide-react';
 import { useSimulationContext } from '@/contexts/SimulationContext';
+import { t } from '@/lib/translations';
 
 export default function Dashboard() {
   const { state, apiAnalysis } = useSimulationContext();
@@ -26,11 +27,11 @@ export default function Dashboard() {
             <span className={`relative inline-flex rounded-full h-4 w-4 ${isCritical ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)]' : 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,1)]'}`}></span>
           </div>
           <span className={`${isCritical ? 'text-red-400' : 'text-green-400'} font-bold tracking-widest uppercase text-sm`}>
-            {isCritical ? 'System Pulse: Critical Alert Active' : 'System Pulse: Operating Normally'}
+            {isCritical ? t('pulse_critical') : t('pulse_normal')}
           </span>
         </div>
         <div className="relative z-10 text-xs font-mono text-gray-400 flex gap-6">
-          <span>Global State: <span className="text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded">{state}</span></span>
+          <span>{t('global_state')} <span className="text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded">{state}</span></span>
         </div>
       </motion.div>
 
@@ -39,59 +40,59 @@ export default function Dashboard() {
         <div className="bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 relative overflow-hidden">
            <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm font-medium text-gray-400">Total Active Tickets</p>
+                <p className="text-sm font-medium text-gray-400">{t('total_active_tickets')}</p>
                 <h3 className="text-3xl font-bold mt-1 text-white">{isCritical ? '2' : '1'}</h3>
               </div>
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <TicketIcon className="w-5 h-5 text-blue-400" />
               </div>
            </div>
-           <div className="text-xs text-green-400 font-medium">↓ 12% from yesterday</div>
+           <div className="text-xs text-green-400 font-medium">{t('down_12_yesterday')}</div>
         </div>
 
         <div className="bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 relative overflow-hidden">
            <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm font-medium text-gray-400">Critical Alerts</p>
+                <p className="text-sm font-medium text-gray-400">{t('critical_alerts')}</p>
                 <h3 className="text-3xl font-bold mt-1 text-white">{isCritical ? '1' : '0'}</h3>
               </div>
               <div className={`p-2 rounded-lg ${isCritical ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
                 <ShieldCheck className={`w-5 h-5 ${isCritical ? 'text-red-400' : 'text-green-400'}`} />
               </div>
            </div>
-           <div className={`text-xs font-medium ${isCritical ? 'text-red-400' : 'text-gray-500'}`}>Requires immediate attention</div>
+           <div className={`text-xs font-medium ${isCritical ? 'text-red-400' : 'text-gray-500'}`}>{t('requires_attention')}</div>
         </div>
 
         <div className="bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 relative overflow-hidden">
            <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm font-medium text-gray-400">Average MTTR</p>
+                <p className="text-sm font-medium text-gray-400">{t('average_mttr')}</p>
                 <h3 className="text-3xl font-bold mt-1 text-white">4m 12s</h3>
               </div>
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <ZapIcon className="w-5 h-5 text-purple-400" />
               </div>
            </div>
-           <div className="text-xs text-green-400 font-medium">↑ 34% AI Improvement</div>
+           <div className="text-xs text-green-400 font-medium">↑ 34% {t('ai_improvement')}</div>
         </div>
 
         <div className="bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 relative overflow-hidden">
            <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm font-medium text-gray-400">AI Confidence (Avg)</p>
+                <p className="text-sm font-medium text-gray-400">{t('ai_confidence_avg')}</p>
                 <h3 className="text-3xl font-bold mt-1 text-white">{apiAnalysis?.confidence ? (apiAnalysis.confidence <= 1 ? Math.round(apiAnalysis.confidence * 100) : apiAnalysis.confidence) : '92'}%</h3>
               </div>
               <div className="p-2 bg-yellow-500/20 rounded-lg">
                 <Target className="w-5 h-5 text-yellow-400" />
               </div>
            </div>
-           <div className="text-xs text-green-400 font-medium">Highly Accurate RAG Model</div>
+           <div className="text-xs text-green-400 font-medium">{t('rag_model')}</div>
         </div>
       </div>
 
       {/* RECENT ACTIVITY */}
       <div className="mt-4 bg-card/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-6">Recent Activity Feed</h3>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-6">{t('recent_activity')}</h3>
         <div className="space-y-4">
           
           {isCritical && (
@@ -99,11 +100,11 @@ export default function Dashboard() {
                <div className="flex items-center gap-4">
                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
                  <div>
-                   <p className="text-sm font-medium text-red-200">New Critical Ticket Generated (T-101)</p>
-                   <p className="text-xs text-red-400/70 mt-1">Node HWY-042 - Thermal Spike Detected</p>
+                   <p className="text-sm font-medium text-red-200">{t('new_critical_ticket')}</p>
+                   <p className="text-xs text-red-400/70 mt-1">{t('thermal_spike')}</p>
                  </div>
                </div>
-               <span className="text-xs text-gray-500">Just now</span>
+               <span className="text-xs text-gray-500">{t('just_now')}</span>
             </motion.div>
           )}
 
@@ -111,22 +112,22 @@ export default function Dashboard() {
              <div className="flex items-center gap-4">
                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                <div>
-                 <p className="text-sm font-medium text-gray-200">Routine Maintenance Completed</p>
-                 <p className="text-xs text-gray-500 mt-1">Sector 7 Edge Routers patched.</p>
+                 <p className="text-sm font-medium text-gray-200">{t('routine_maintenance')}</p>
+                 <p className="text-xs text-gray-500 mt-1">{t('edge_routers_patched')}</p>
                </div>
              </div>
-             <span className="text-xs text-gray-500">2h ago</span>
+             <span className="text-xs text-gray-500">{t('two_h_ago')}</span>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
              <div className="flex items-center gap-4">
                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
                <div>
-                 <p className="text-sm font-medium text-gray-200">Ticket T-087 Closed by AI</p>
-                 <p className="text-xs text-gray-500 mt-1">Network Latency Issue resolved autonomously.</p>
+                 <p className="text-sm font-medium text-gray-200">{t('ticket_closed_ai')}</p>
+                 <p className="text-xs text-gray-500 mt-1">{t('network_latency_resolved')}</p>
                </div>
              </div>
-             <span className="text-xs text-gray-500">5h ago</span>
+             <span className="text-xs text-gray-500">{t('five_h_ago')}</span>
           </div>
 
         </div>

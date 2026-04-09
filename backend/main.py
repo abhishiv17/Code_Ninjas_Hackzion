@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+import json
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ai_engine import analyze_ticket_with_ai
@@ -40,8 +41,8 @@ async def analyze_ticket(request: TicketRequest):
     # Simply pass the ticket string to our AI engine
     result = analyze_ticket_with_ai(request.ticket)
     
-    # Return the dictionary properly structured
-    return result
+    # Return the dictionary properly structured, ensuring unicode isn't escaped
+    return Response(content=json.dumps(result, ensure_ascii=False), media_type="application/json")
 
 # Simple root endpoint to verify the server is running
 @app.get("/")
