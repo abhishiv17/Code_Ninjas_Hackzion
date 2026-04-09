@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 AI-Powered Intelligent Ticket Routing & Resolution Agent
 
 Bridging the IT/OT Knowledge Gap in Smart Highway Systems📌 
@@ -9,3 +10,7 @@ LLM "Brain" Setup: Integrated Gemini 2.0 Flash via LangChain for high-speed, int
 Install Dependencies:Bashpip install -r requirements.txt
 Run the Agent:Bashpython brains.py
 💡 Pro-Tips for your README:Add a "Why" section: Briefly explain that reducing Mean Time to Resolution (MTTR) can save lives on a highway. It gives your project "soul."Screenshots: Once you have even a basic UI, add a screenshot. Visuals prove the project is "real."The "Impact" Section: Mention how this aligns with UN Sustainable Development Goals (likely Goal 9: Industry, Innovation, and Infrastructure).
+=======
+# Code_Ninjas_Hackzion
+Initial repo for the Hackathon
+>>>>>>> fa97b27b593eff598f085eb23d113c3ba405bea6
