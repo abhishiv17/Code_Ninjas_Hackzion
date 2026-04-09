@@ -1,0 +1,30 @@
+# Core LLM and Orchestration
+langchain
+langchain-community
+langchain-text-splitters
+langchain-core
+langchain-chroma
+langchain-groq
+langchain-huggingface
+langchain-google-genai
+google-generativeai
+
+# Vector Database and Data Handling
+chromadb
+pypdf
+sentence-transformers
+
+# Environment and Utilities
+python-dotenv
+
+# API and Authentication
+fastapi
+uvicorn[standard]
+pydantic[email]
+pyjwt
+passlib[bcrypt]
+bcrypt
+email-validator
+
+# Streamlit (original UI)
+streamlit
