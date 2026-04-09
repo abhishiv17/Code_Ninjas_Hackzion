@@ -1,12 +1,19 @@
 # Core LLM and Orchestration
 langchain
 langchain-google-genai
+langchain-groq
 google-generativeai
 
 # Vector Database and Data Handling
 chromadb
 pypdf
 langchain-community
+langchain-chroma
+langchain-huggingface
+
+# FastAPI and Web
+fastapi
+uvicorn
 
 # Environment and Utilities
 python-dotenv

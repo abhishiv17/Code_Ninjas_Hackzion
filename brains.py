@@ -7,16 +7,13 @@ from dotenv import load_dotenv
 # ==============================
 # WARNING & LOGGING SUPPRESSION
 # ==============================
-# Suppress standard Python warnings (like the HF Hub unauthenticated warning)
 warnings.filterwarnings("ignore")
 
-# Tell Transformers and Hugging Face to be quiet BEFORE they are imported
-os.environ["TRANSFORMERS_VERBOSITY"] = "error" # Suppresses the "BertModel LOAD REPORT"
-os.environ["TOKENIZERS_PARALLELISM"] = "false" # Prevents potential tokenizer warnings
+os.environ["TRANSFORMERS_VERBOSITY"] = "error" 
+os.environ["TOKENIZERS_PARALLELISM"] = "false" 
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["USER_AGENT"] = "SmartHighwayAgent/1.0" 
 
-# Silence the specific loggers causing terminal clutter
 logging.getLogger("transformers").setLevel(logging.ERROR)
 logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
@@ -26,7 +23,6 @@ logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 # ==============================
 load_dotenv()
 
-# Look for the Groq API Key
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     print("\n[CRITICAL ERROR] GROQ_API_KEY missing. Please add it to your .env file.")
@@ -35,7 +31,6 @@ if not GROQ_API_KEY:
 # ==============================
 # IMPORTS
 # ==============================
-# Imports are intentionally placed AFTER the suppressions so they initialize quietly
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -84,18 +79,15 @@ except Exception as e:
 print("3. Connecting to Groq AI...")
 
 def initialize_llm():
-    # Using incredibly fast open-source models hosted on Groq LPUs
     models_to_try = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "gemma2-9b-it"]
     for model_name in models_to_try:
         try:
             print(f"   -> Trying {model_name}...")
-            # Clean Groq instantiation
             llm_instance = ChatGroq(
                 temperature=0, 
                 model_name=model_name,
                 groq_api_key=GROQ_API_KEY
             )
-            # Ping test to verify the connection
             llm_instance.invoke("ping")
             print(f"   -> [SUCCESS] Connected to {model_name}")
             return llm_instance
@@ -171,7 +163,6 @@ def safe_invoke(chain, query):
 # ==============================
 # EXPORT FOR FRONTEND
 # ==============================
-# We just define a helper function so the frontend can call it easily
 def process_ticket(ticket_text):
     if qa_chain is None:
         return fallback_response(ticket_text)
