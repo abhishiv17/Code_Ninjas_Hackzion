@@ -1,0 +1,13 @@
+# Core LLM and Orchestration
+langchain
+langchain-google-genai
+google-generativeai
+
+# Vector Database and Data Handling
+chromadb
+pypdf
+langchain-community
+
+# Environment and Utilities
+python-dotenv
+ticker
