@@ -14,7 +14,7 @@ interface DashboardContextType {
   selectedAlert: Alert | null;
   setSelectedAlert: (alert: Alert | null) => void;
   ragTerminalQuery: string;
-  setRagTerminalQuery: (query: string) => void;
+  setRagTerminalQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);

@@ -2,13 +2,16 @@
 
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { MessageSquare, ThumbsUp, ThumbsDown, Send, Users } from 'lucide-react';
+import { MessageSquare, ThumbsUp, ThumbsDown, Send, Users, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CommunityTickets() {
-  const { communityTickets, rateCommunityTicket, commentCommunityTicket } = useApp();
+  const { communityTickets, rateCommunityTicket, commentCommunityTicket, createCommunityTicket } = useApp();
   const { t } = useLanguage();
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [isCreating, setIsCreating] = useState(false);
+  const [newIssue, setNewIssue] = useState('');
+  const [newSolution, setNewSolution] = useState('');
 
   const handleComment = (id: string) => {
     const text = commentInputs[id];
@@ -18,15 +21,67 @@ export default function CommunityTickets() {
     }
   };
 
+  const handleCreateNew = async () => {
+    if (newIssue.trim() && newSolution.trim()) {
+      await createCommunityTicket(newIssue, newSolution);
+      setNewIssue('');
+      setNewSolution('');
+      setIsCreating(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
-      <div className="flex items-center space-x-2 mb-2">
-        <Users className="text-blue-500" size={20} />
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('community.title')}</h2>
+    <div className="flex flex-col h-full rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/40 dark:backdrop-blur-md">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center space-x-2">
+          <Users className="text-blue-500" size={20} />
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('community.title')}</h2>
+        </div>
+        <button 
+          onClick={() => setIsCreating(!isCreating)}
+          className="flex items-center space-x-1 text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <PlusCircle size={14} />
+          <span>New Ticket</span>
+        </button>
       </div>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t('community.subtitle')}</p>
 
       <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        {isCreating && (
+          <div className="rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 p-4 mb-4">
+            <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 text-sm">Post a New Solution</h3>
+            <input 
+              type="text" 
+              placeholder="Hardware / System Issue..."
+              className="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-400"
+              value={newIssue}
+              onChange={(e) => setNewIssue(e.target.value)}
+            />
+            <textarea 
+              placeholder="How did you resolve it?"
+              className="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-400 min-h-[80px]"
+              value={newSolution}
+              onChange={(e) => setNewSolution(e.target.value)}
+            />
+            <div className="flex justify-end space-x-2 text-right">
+              <button 
+                onClick={() => setIsCreating(false)}
+                className="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors mr-2"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCreateNew}
+                disabled={!newIssue.trim() || !newSolution.trim()}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Post Ticket
+              </button>
+            </div>
+          </div>
+        )}
+
         {communityTickets.map((ticket) => (
           <div key={ticket.id} className="rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 p-4">
             <div className="flex justify-between items-start mb-2">

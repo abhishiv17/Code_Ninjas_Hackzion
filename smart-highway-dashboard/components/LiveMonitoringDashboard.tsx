@@ -17,13 +17,13 @@ import {
 } from '@/lib/liveMonitoringData';
 import { Activity, Radio, Video } from 'lucide-react';
 
-const TollPlazaCanvas = dynamic(
-  () => import('@/components/live-monitoring/TollPlazaCanvas'),
+const KarnatakaMap = dynamic(
+  () => import('@/components/live-monitoring/KarnatakaMap'),
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[min(52vh,420px)] min-h-[280px] w-full items-center justify-center rounded-xl border border-slate-700/80 bg-slate-950 text-sm text-slate-400">
-        Loading 3D plaza…
+      <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-slate-700/80 bg-slate-950 text-sm text-slate-400">
+        Loading Karnataka Map...
       </div>
     ),
   },
@@ -161,7 +161,7 @@ export default function LiveMonitoringDashboard() {
           </span>
           <span className="ml-auto font-mono text-slate-500">Toll {tollId}</span>
         </div>
-        <TollPlazaCanvas key={tollId} tollId={tollId} />
+        <KarnatakaMap selectedTollId={tollId} onTollSelect={setTollId} />
       </section>
 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch">

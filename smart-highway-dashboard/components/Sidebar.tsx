@@ -34,7 +34,7 @@ export default function Sidebar() {
         </div>
         <div>
           <h1 className="font-bold text-slate-900 dark:text-white">
-            Smart<span className="text-blue-600 dark:text-blue-400">Way</span>
+            Control<span className="text-blue-600 dark:text-blue-400"> Grid</span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">Command Center</p>
         </div>

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-type Language = 'en' | 'es';
+type Language = 'en' | 'es' | 'hi' | 'kn';
 
 type Translations = {
   [key in Language]: {
@@ -25,7 +25,7 @@ const translations: Translations = {
     'topbar.dark': 'Dark',
     // Dashboard
     'dash.welcome': 'Welcome back',
-    'dash.subtitle': 'Smart Highway Command Center - Real-time System Monitoring',
+    'dash.subtitle': 'Control Grid Command Center - Real-time System Monitoring',
     'dash.activeVehicles': 'Active Vehicles',
     'dash.latency': 'Toll Gate Latency',
     'dash.sensors': 'IoT Sensors Online',
@@ -60,7 +60,7 @@ const translations: Translations = {
     'topbar.dark': 'Oscuro',
     // Dashboard
     'dash.welcome': 'Bienvenido de nuevo',
-    'dash.subtitle': 'Centro de Comando - Monitoreo del Sistema',
+    'dash.subtitle': 'Control Grid - Centro de Comando - Monitoreo del Sistema',
     'dash.activeVehicles': 'Vehículos Activos',
     'dash.latency': 'Latencia de Peaje',
     'dash.sensors': 'Sensores IoT en Línea',
@@ -80,6 +80,76 @@ const translations: Translations = {
     'rag.placeholder': 'Describe un problema o pregunta algo...',
     'rag.helpful': 'Útil',
     'rag.notHelpful': 'No Útil',
+  },
+  hi: {
+    // Navigation
+    'nav.dashboard': 'डैशबोर्ड',
+    'nav.tickets': 'टिकट',
+    'nav.monitoring': 'लाइव मॉनिटरिंग',
+    'nav.diagnostics': 'एआई डायग्नोस्टिक्स',
+    'nav.logout': 'लॉग आउट',
+    // Topbar
+    'topbar.title': 'कमांड सेंटर',
+    'topbar.subtitle': 'सिस्टम मॉनिटरिंग और एआई टर्मिनल',
+    'topbar.light': 'हल्का',
+    'topbar.dark': 'गहरा',
+    // Dashboard
+    'dash.welcome': 'वापसी पर स्वागत है',
+    'dash.subtitle': 'कंट्रोल ग्रिड कमांड सेंटर - रियल-टाइम मॉनिटरिंग',
+    'dash.activeVehicles': 'सक्रिय वाहन',
+    'dash.latency': 'टोल गेट लेटेंसी',
+    'dash.sensors': 'IoT सेंसर ऑनलाइन',
+    'dash.openTickets': 'खुले टिकट',
+    // System Alerts
+    'alerts.title': 'सिस्टम अलर्ट',
+    'alerts.subtitle': 'मैनुअल जांचने के लिए अलर्ट क्लिक करें।',
+    // Community Tickets
+    'community.title': 'समुदाय द्वारा समीक्षा किए गए टिकट',
+    'community.subtitle': 'अन्य तकनीशियनों से सत्यापित समाधान।',
+    'community.solution': 'समाधान:',
+    'community.comments': 'टिप्पणियां',
+    'community.leaveComment': 'टिप्पणी छोड़ें...',
+    // RAG Terminal
+    'rag.title': 'RAG एजेंट टर्मिनल',
+    'rag.clear': 'साफ़ करें',
+    'rag.placeholder': 'समस्या का वर्णन करें या पूछें...',
+    'rag.helpful': 'मददगार',
+    'rag.notHelpful': 'मददगार नहीं',
+  },
+  kn: {
+    // Navigation
+    'nav.dashboard': 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
+    'nav.tickets': 'ಟಿಕೆಟ್‌ಗಳು',
+    'nav.monitoring': 'ಲೈವ್ ಮಾನಿಟರಿಂಗ್',
+    'nav.diagnostics': 'ಎಐ ಡಯಾಗ್ನೋಸ್ಟಿಕ್ಸ್',
+    'nav.logout': 'ಲಾಗ್ ಔಟ್',
+    // Topbar
+    'topbar.title': 'ಕಮಾಂಡ್ ಸೆಂಟರ್',
+    'topbar.subtitle': 'ಸಿಸ್ಟಮ್ ಮಾನಿಟರಿಂಗ್ ಮತ್ತು ಎಐ ಟರ್ಮಿನಲ್',
+    'topbar.light': 'ಬೆಳಕು',
+    'topbar.dark': 'ಕತ್ತಲು',
+    // Dashboard
+    'dash.welcome': 'ಮರಳಿ ಸ್ವಾಗತ',
+    'dash.subtitle': 'ಕಂಟ್ರೋಲ್ ಗ್ರಿಡ್ ಕಮಾಂಡ್ ಸೆಂಟರ್ - ರಿಯಲ್ ಟೈಮ್ ಮಾನಿಟರಿಂಗ್',
+    'dash.activeVehicles': 'ಸಕ್ರಿಯ ವಾಹನಗಳು',
+    'dash.latency': 'ಟೋಲ್ ಗೇಟ್ ಲೇಟೆನ್ಸಿ',
+    'dash.sensors': 'IoT ಸೆನ್ಸರ್‌ಗಳು ಆನ್‌ಲೈನ್',
+    'dash.openTickets': 'ತೆರೆದ ಟಿಕೆಟ್‌ಗಳು',
+    // System Alerts
+    'alerts.title': 'ಸಿಸ್ಟಮ್ ಅಲರ್ಟ್‌ಗಳು',
+    'alerts.subtitle': 'ಕೈಪಿಡಿಗಳನ್ನು ಪರಿಶೀಲಿಸಲು ಅಲರ್ಟ್ ಕ್ಲಿಕ್ ಮಾಡಿ.',
+    // Community Tickets
+    'community.title': 'ಸಮುದಾಯ ಪರಿಶೀಲಿಸಿದ ಟಿಕೆಟ್‌ಗಳು',
+    'community.subtitle': 'ತಂತ್ರಜ್ಞರಿಂದ ಪರಿಶೀಲಿಸಲಾದ ಪರಿಹಾರಗಳು.',
+    'community.solution': 'ಪರಿಹಾರ:',
+    'community.comments': 'ಕಾಮೆಂಟ್‌ಗಳು',
+    'community.leaveComment': 'ಕಾಮೆಂಟ್ ಬರೆಯಿರಿ...',
+    // RAG Terminal
+    'rag.title': 'RAG ಏಜೆಂಟ್ ಟರ್ಮಿನಲ್',
+    'rag.clear': 'ಅಳಿಸಿ',
+    'rag.placeholder': 'ಸಮಸ್ಯೆ ವಿವರಿಸಿ ಅಥವಾ ಕೇಳಿ...',
+    'rag.helpful': 'ಉಪಯುಕ್ತ',
+    'rag.notHelpful': 'ಉಪಯುಕ್ತವಲ್ಲ',
   }
 };
 

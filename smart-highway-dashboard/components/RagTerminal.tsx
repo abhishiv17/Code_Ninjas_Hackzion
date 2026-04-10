@@ -56,21 +56,32 @@ export default function RagTerminal() {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
 
         recognitionRef.current.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          setRagTerminalQuery((prev) => prev + (prev ? ' ' : '') + transcript);
-          setIsListening(false);
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
+          if (finalTranscript) {
+            setRagTerminalQuery((prev) => prev + (prev ? ' ' : '') + finalTranscript);
+          }
         };
 
-        recognitionRef.current.onerror = () => {
+        recognitionRef.current.onerror = (e: any) => {
+          console.error('Speech recognition error', e.error);
           setIsListening(false);
+          recognitionRef.current.stop();
         };
 
         recognitionRef.current.onend = () => {
-          setIsListening(false);
+          setIsListening((current) => {
+            if (current) recognitionRef.current.start(); // keep listening until manually stopped
+            return current;
+          });
         };
       }
     }

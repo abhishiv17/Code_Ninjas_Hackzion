@@ -75,6 +75,7 @@ export interface AppContextType {
   // Community Tickets
   communityTickets: CommunityTicketData[];
   fetchCommunityTickets: () => Promise<void>;
+  createCommunityTicket: (issue: string, solution: string) => Promise<void>;
   rateCommunityTicket: (id: string, type: 'up' | 'down') => Promise<void>;
   commentCommunityTicket: (id: string, text: string) => Promise<void>;
 
@@ -236,6 +237,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createCommunityTicket = async (issue: string, solution: string) => {
+    try {
+      const res = await fetch('http://127.0.0.1:8001/api/community-tickets/new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issue, solution })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setCommunityTickets([data.data, ...communityTickets]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const rateCommunityTicket = async (id: string, type: 'up' | 'down') => {
     setCommunityTickets(prev => prev.map(t => t.id === id ? { ...t, rating: type === 'up' ? t.rating + 1 : t.rating - 1 } : t));
     try {
@@ -288,6 +305,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         submitFeedback,
         communityTickets,
         fetchCommunityTickets,
+        createCommunityTicket,
         rateCommunityTicket,
         commentCommunityTicket,
         sidebarOpen,

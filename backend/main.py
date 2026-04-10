@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI, HTTPException, Depends, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from ai_engine import analyze_ticket_with_ai
 from ml_models import predict_root_cause, detect_anomaly, predict_urgency
@@ -17,13 +17,13 @@ from supabase import create_client, Client
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 USERS_DB: Dict[str, Dict] = {
     "demo@example.com": {
         "name": "Demo User",
         "email": "demo@example.com",
-        "hashed_password": pwd_context.hash("Demo@1234"),
+        "hashed_password": bcrypt.hashpw("Demo@1234".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
         "created_at": datetime.utcnow().isoformat()
     }
 }
@@ -46,10 +46,13 @@ class AuthResponse(BaseModel):
     user: Dict
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except Exception:
+        return False
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -274,6 +277,19 @@ community_tickets_db = [
 @app.get("/api/community-tickets")
 async def get_community_tickets():
     return {"status": "success", "data": community_tickets_db}
+
+@app.post("/api/community-tickets/new")
+async def create_community_ticket(payload: dict):
+    new_ticket = {
+        "id": f"ct-{100 + len(community_tickets_db) + 1}",
+        "issue": payload.get("issue", "Unknown Issue"),
+        "solution": payload.get("solution", "Pending Analysis"),
+        "rating": 0,
+        "comments": [],
+        "time": "Just now"
+    }
+    community_tickets_db.insert(0, new_ticket) # Add to top
+    return {"status": "success", "data": new_ticket}
 
 @app.post("/api/community-tickets/{ticket_id}/rate")
 async def rate_community_ticket(ticket_id: str, action: dict):

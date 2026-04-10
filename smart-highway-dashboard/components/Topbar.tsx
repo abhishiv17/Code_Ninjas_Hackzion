@@ -22,15 +22,19 @@ export default function Topbar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-4 md:gap-6">
-        <button
-          type="button"
-          onClick={() => setLanguage(language === 'en' ? 'es' : 'en')}
-          className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-slate-800"
-          title="Toggle Language"
-        >
-          <Globe size={18} className="text-blue-500" />
-          <span className="hidden sm:inline uppercase">{language}</span>
-        </button>
+        <div className="relative flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800">
+          <Globe size={18} className="text-blue-500 ml-1" />
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as 'en' | 'es' | 'hi' | 'kn')}
+            className="uppercase bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 outline-none pr-1 pl-2"
+          >
+            <option value="en" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">EN</option>
+            <option value="hi" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">HI</option>
+            <option value="kn" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">KN</option>
+            <option value="es" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-white">ES</option>
+          </select>
+        </div>
 
         <button
           type="button"

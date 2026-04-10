@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 // This metadata populates the <head> of your document
 export const metadata: Metadata = {
-  title: "SmartHighway OS | AI Command Center",
+  title: "Control Grid | Command Center",
   description: "AI-Powered Highway Management with Live Monitoring & Support",
 };
 
