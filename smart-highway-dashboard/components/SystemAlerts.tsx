@@ -29,14 +29,14 @@ export default function SystemAlerts({ onAlertClick }: SystemAlertsProps) {
   }, [onAlertClick]);
 
   return (
-    <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 h-full">
+    <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 h-full flex flex-col">
       <div className="flex items-center space-x-2 mb-2">
         <AlertCircle className="text-red-400" size={20} />
         <h2 className="text-lg font-semibold text-white">System Alerts</h2>
       </div>
       <p className="text-sm text-slate-400 mb-6">Click an alert to auto-query the manuals.</p>
 
-      <div className="space-y-3">
+      <div className="space-y-3 flex-1 overflow-y-auto">
         {alerts.map((alert) => (
           <button
             key={alert.id}

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Loader } from 'lucide-react';
+import { Bot, Send, Loader, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { solveTicket } from '@/lib/api';
 import { useDashboard } from '@/context/DashboardContext';
+import { useApp } from '@/context/AppContext';
 
 interface Message {
   id: string;
@@ -15,6 +16,7 @@ interface Message {
 
 export default function RagTerminal() {
   const { ragTerminalQuery, setRagTerminalQuery } = useDashboard();
+  const { submitFeedback } = useApp();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -25,6 +27,7 @@ export default function RagTerminal() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState<Map<string, boolean>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load messages from localStorage on mount
@@ -113,6 +116,15 @@ export default function RagTerminal() {
     }
   };
 
+  const handleFeedback = async (messageId: string, isHelpful: boolean, userQuery: string, response: string) => {
+    setFeedbackGiven((prev) => new Map(prev).set(messageId, isHelpful));
+    try {
+      await submitFeedback(userQuery, response, isHelpful);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  };
+
   const clearHistory = () => {
     setMessages([
       {
@@ -141,27 +153,69 @@ export default function RagTerminal() {
       </div>
 
       <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-lg p-4 mb-4 overflow-y-auto flex flex-col space-y-3">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+        {messages.map((message, idx) => {
+          const prevMessage = idx > 0 ? messages[idx - 1] : null;
+          return (
             <div
-              className={`max-w-[80%] text-sm p-4 rounded-lg ${
-                message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : message.error
-                  ? 'bg-red-500/10 border border-red-500/20 text-red-200'
-                  : 'bg-blue-500/10 border border-blue-500/20 text-blue-200'
-              }`}
+              key={message.id}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <p className="whitespace-pre-wrap break-words">{message.content}</p>
-              <span className="text-xs opacity-60 mt-2 block">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              <div>
+                <div
+                  className={`max-w-[80%] text-sm p-4 rounded-lg ${
+                    message.role === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : message.error
+                      ? 'bg-red-500/10 border border-red-500/20 text-red-200'
+                      : 'bg-blue-500/10 border border-blue-500/20 text-blue-200'
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  <span className="text-xs opacity-60 mt-2 block">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                {message.role === 'assistant' && !message.error && !feedbackGiven.has(message.id) && (
+                  <div className="flex items-center space-x-2 mt-2">
+                    <button
+                      onClick={() =>
+                        handleFeedback(
+                          message.id,
+                          true,
+                          prevMessage?.content || '',
+                          message.content
+                        )
+                      }
+                      className="text-xs px-2 py-1 text-slate-400 hover:text-green-400 hover:bg-slate-700/50 rounded transition-colors flex items-center space-x-1"
+                    >
+                      <ThumbsUp size={14} />
+                      <span>Helpful</span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleFeedback(
+                          message.id,
+                          false,
+                          prevMessage?.content || '',
+                          message.content
+                        )
+                      }
+                      className="text-xs px-2 py-1 text-slate-400 hover:text-red-400 hover:bg-slate-700/50 rounded transition-colors flex items-center space-x-1"
+                    >
+                      <ThumbsDown size={14} />
+                      <span>Not Helpful</span>
+                    </button>
+                  </div>
+                )}
+                {feedbackGiven.has(message.id) && (
+                  <p className="text-xs text-slate-400 mt-2">
+                    {feedbackGiven.get(message.id) ? '✓ Feedback recorded (helpful)' : '✓ Feedback recorded (not helpful)'}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {isLoading && (
           <div className="flex justify-start">
             <div className="flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 text-blue-200 text-sm p-4 rounded-lg">

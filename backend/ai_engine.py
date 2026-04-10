@@ -1,80 +1,47 @@
-import os
-import google.generativeai as genai
+import os, json
+from groq import Groq
+from dotenv import load_dotenv
 
-# Try to get the Gemini API key from the environment variables
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+load_dotenv()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-# Configure Gemini API if a key is provided
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
+FALLBACK = {
+    "sensor|thermal|overheating": ("Hardware", "Replace 15A fuse in Panel B and physically inspect the sensor.", 0.94),
+    "network|latency|offline": ("Network", "Restart Sector 4 edge router and verify fiber connections.", 0.88),
+}
 
 def analyze_ticket_with_ai(ticket_text: str) -> dict:
-    """
-    Analyzes a ticket using Gemini if the API key is set,
-    otherwise falls back to a friendly mock response.
-    """
-    
-    # 1. Fallback to mock data if no API key is set (perfect for local testing/hackathons)
-    if not GEMINI_API_KEY:
-        # Simple keyword matching for a better mock experience
+    if not groq_client:
         text_lower = ticket_text.lower()
-        
-        if "sensor" in text_lower or "thermal" in text_lower or "overheating" in text_lower:
-            return {
-                "type": "Hardware",
-                "solution": "Replace 15A fuse in Panel B and physically inspect the sensor.",
-                "confidence": 0.94
-            }
-        elif "network" in text_lower or "latency" in text_lower or "offline" in text_lower:
-            return {
-                "type": "Network",
-                "solution": "Restart Sector 4 edge router and verify fiber connections.",
-                "confidence": 0.88
-            }
-        else:
-            return {
-                "type": "Software",
-                "solution": "Initiate over-the-air firmware reversion to stable version 2.4.",
-                "confidence": 0.81
-            }
-
-    # 2. Use Gemini API if configured
+        for keywords, (issue_type, solution, conf) in FALLBACK.items():
+            if any(kw in text_lower for kw in keywords.split("|")):
+                return {"type": issue_type, "solution": solution, "confidence": conf}
+        return {"type": "Software", "solution": "Initiate over-the-air firmware reversion to stable version 2.4.", "confidence": 0.81}
     try:
-        model = genai.GenerativeModel('gemini-pro')
-        
-        prompt = f"""
-        You are an AI assistant for a Smart Highway monitoring system.
-        Analyze the following incident ticket: "{ticket_text}"
-        
-<<<<<<< HEAD
-=======
-        Analyze the ticket and reply in the SAME language as the input.
-        
->>>>>>> 84180915496bdca34c830f3d8a97205236d4fb22
-        Respond ONLY with a valid JSON object in this exact format:
-        {{
-            "type": "Hardware/Software/Network",
-            "solution": "A short, actionable step to fix it",
-            "confidence": 0.95
-        }}
-        """
-        
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
-        
-        # Strip potential markdown formatting that APIs sometimes add (e.g. ```json)
-        if response_text.startswith("```json"):
-            response_text = response_text[7:-3]
-            
-        import json
-        return json.loads(response_text)
-        
+        msg = groq_client.chat.completions.create(
+            model="mixtral-8x7b-32768",
+            messages=[
+                {"role": "system", "content": "Return: {\"type\": \"Hardware/Software/Network\", \"solution\": \"action\", \"confidence\": 0.0-1.0}"},
+                {"role": "user", "content": f'Ticket: "{ticket_text}"'}
+            ],
+            temperature=0.7,
+            max_tokens=256
+        )
+        text = msg.choices[0].message.content.strip()
+        for p in ("```json", "```"):
+            if text.startswith(p):
+                text = text[len(p):-3]
+                break
+        return json.loads(text)
     except Exception as e:
-        print(f"Error calling Gemini API: {e}")
-        # Return a safe fallback if the API fails
+        # Enhanced fallback on error
+        text_lower = ticket_text.lower()
+        for keywords, (issue_type, solution, conf) in FALLBACK.items():
+            if any(kw in text_lower for kw in keywords.split("|")):
+                return {"type": issue_type, "solution": solution, "confidence": conf}
         return {
-            "type": "Unknown",
-            "solution": "Manual inspection required. AI analysis failed.",
-            "confidence": 0.00
+            "type": "Software", 
+            "solution": f"Processing ticket: {ticket_text[:100]}... Recommend diagnostic scan and manual review by admin team.", 
+            "confidence": 0.65
         }
