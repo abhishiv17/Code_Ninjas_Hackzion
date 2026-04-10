@@ -47,6 +47,11 @@ def analyze_ticket_with_ai(ticket_text: str) -> dict:
         You are an AI assistant for a Smart Highway monitoring system.
         Analyze the following incident ticket: "{ticket_text}"
         
+<<<<<<< HEAD
+=======
+        Analyze the ticket and reply in the SAME language as the input.
+        
+>>>>>>> 84180915496bdca34c830f3d8a97205236d4fb22
         Respond ONLY with a valid JSON object in this exact format:
         {{
             "type": "Hardware/Software/Network",

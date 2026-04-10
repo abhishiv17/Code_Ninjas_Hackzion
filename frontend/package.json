@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@tailwindcss/postcss": "^4.2.2",
     "@types/leaflet": "^1.9.21",
     "autoprefixer": "^10.4.27",
@@ -20,6 +21,11 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "tailwindcss": "^4.2.2"
+=======
+    "next": "14.2.4",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+>>>>>>> 84180915496bdca34c830f3d8a97205236d4fb22
   },
   "devDependencies": {
     "@types/node": "^20",
