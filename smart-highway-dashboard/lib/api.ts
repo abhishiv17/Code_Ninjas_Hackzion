@@ -15,7 +15,7 @@ export interface TicketResponse {
  */
 export async function solveTicket(query: string): Promise<TicketResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/solve-ticket`, {
+    const response = await fetch(`${API_BASE_URL}/api/diagnostics`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

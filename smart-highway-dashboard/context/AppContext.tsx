@@ -29,6 +29,21 @@ export interface TicketData {
   assignedTo?: string;
 }
 
+export interface CommunityComment {
+  author: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface CommunityTicketData {
+  id: string;
+  issue: string;
+  solution: string;
+  rating: number;
+  time: string;
+  comments: CommunityComment[];
+}
+
 export interface AppContextType {
   // Authentication
   user: User | null;
@@ -57,9 +72,18 @@ export interface AppContextType {
   // Feedback
   submitFeedback: (ticketQuery: string, solution: string, wasSuccessful: boolean) => Promise<void>;
 
+  // Community Tickets
+  communityTickets: CommunityTicketData[];
+  fetchCommunityTickets: () => Promise<void>;
+  rateCommunityTicket: (id: string, type: 'up' | 'down') => Promise<void>;
+  commentCommunityTicket: (id: string, text: string) => Promise<void>;
+
   // UI State
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  slidePanelOpen: boolean;
+  setSlidePanelOpen: (open: boolean) => void;
+  rehydrateAuthFromStorage: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -128,8 +152,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [ragTerminalQuery, setRagTerminalQuery] = useState('');
 
+  // Community Tickets
+  const [communityTickets, setCommunityTickets] = useState<CommunityTicketData[]>([]);
+
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [slidePanelOpen, setSlidePanelOpen] = useState(false);
+
+  const rehydrateAuthFromStorage = () => {
+    const s = getInitialAuthState();
+    setUser(s.user);
+    setIsAuthenticated(s.isAuth);
+  };
 
   // Hydrate auth state from localStorage
   useEffect(() => {
@@ -190,6 +224,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchCommunityTickets = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:8001/api/community-tickets');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setCommunityTickets(data.data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch community tickets', e);
+    }
+  };
+
+  const rateCommunityTicket = async (id: string, type: 'up' | 'down') => {
+    setCommunityTickets(prev => prev.map(t => t.id === id ? { ...t, rating: type === 'up' ? t.rating + 1 : t.rating - 1 } : t));
+    try {
+      await fetch(`http://127.0.0.1:8001/api/community-tickets/${id}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const commentCommunityTicket = async (id: string, text: string) => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8001/api/community-tickets/${id}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: user?.email || 'User', text })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setCommunityTickets(prev => prev.map(t => t.id === id ? data.data : t));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommunityTickets();
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -207,8 +286,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ragTerminalQuery,
         setRagTerminalQuery,
         submitFeedback,
+        communityTickets,
+        fetchCommunityTickets,
+        rateCommunityTicket,
+        commentCommunityTicket,
         sidebarOpen,
         setSidebarOpen,
+        slidePanelOpen,
+        setSlidePanelOpen,
+        rehydrateAuthFromStorage,
       }}
     >
       {children}

@@ -16,7 +16,7 @@ export default function StatCard({
   title, 
   value, 
   icon, 
-  valueColor = "text-white",
+  valueColor = "text-slate-900 dark:text-white",
   isLoading = false,
   onRefresh
 }: StatCardProps) {
@@ -36,8 +36,8 @@ export default function StatCard({
   };
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-xl flex flex-col justify-between hover:border-slate-600/50 transition-colors">
-      <div className="flex justify-between items-start text-slate-400 mb-4">
+    <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 transition-colors hover:border-slate-300 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-600/50">
+      <div className="mb-4 flex items-start justify-between text-slate-500 dark:text-slate-400">
         <span className="text-sm font-medium">{title}</span>
         {loading ? (
           <Loader size={18} className="animate-spin text-blue-400" />
@@ -53,7 +53,7 @@ export default function StatCard({
       </div>
       <div className={`text-3xl font-bold ${valueColor}`}>
         {loading ? (
-          <span className="text-slate-500 text-lg">Loading...</span>
+          <span className="text-lg text-slate-400 dark:text-slate-500">Loading...</span>
         ) : (
           value || 'N/A'
         )}

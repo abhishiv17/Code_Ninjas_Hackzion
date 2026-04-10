@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { IconMail, IconLock, IconUser, IconEye, IconArrowLeft, IconSun, IconMoon, IconCheck, IconX } from '@/lib/icons';
 import { calcPasswordStrength, validateEmail, STRENGTH_LABELS, getStrengthColor } from '@/lib/auth-helpers';
+import { useTheme } from '@/context/ThemeContext';
 
 type View = 'signin' | 'signup' | 'forgot';
-type Theme = 'dark' | 'light';
 type ToastT = { msg: string; type: 'success' | 'error' } | null;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001';
@@ -253,15 +253,11 @@ function ForgotView({ onBack, showToast }: { onBack: () => void; showToast: (msg
 
 export default function AuthPage() {
   const router = useRouter();
-  const [theme, setTheme] = useState<Theme>('dark');
+  const { theme, toggleTheme } = useTheme();
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
   const [view, setView] = useState<View>('signin');
   const [toast, setToast] = useState<ToastT>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
@@ -285,8 +281,9 @@ export default function AuthPage() {
 
       {/* Theme Toggle */}
       <button
-        onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
-        className={`fixed top-4 right-4 p-2 rounded-lg border z-20 ${theme === 'dark' ? 'bg-slate-800/50 border-slate-700 text-yellow-400 hover:bg-slate-700' : 'bg-white/50 border-slate-200 text-slate-700 hover:bg-white'}`}
+        type="button"
+        onClick={toggleTheme}
+        className={`fixed top-4 right-4 z-20 rounded-lg border p-2 ${theme === 'dark' ? 'border-slate-700 bg-slate-800/50 text-yellow-400 hover:bg-slate-700' : 'border-slate-200 bg-white/50 text-slate-700 hover:bg-white'}`}
       >
         {theme === 'dark' ? <IconSun /> : <IconMoon />}
       </button>

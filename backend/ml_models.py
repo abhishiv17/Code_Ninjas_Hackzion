@@ -36,3 +36,29 @@ anomaly_model.fit(np.array([[40, 220], [42, 221], [39, 219], [41, 222]]))
 
 def detect_anomaly(temp, voltage):
     return "anomaly" if anomaly_model.predict([[temp, voltage]])[0] == -1 else "normal"
+
+# Live Monitoring Urgency Model
+from sklearn.linear_model import LogisticRegression
+
+# Features: [ticket_frequency_12h, hardware_status (0: offline, 1: online), latency_ms]
+# Given the small demo, we train an inline LogisticRegression to produce probabilities.
+urgency_model = LogisticRegression(random_state=42)
+# Dummy data: [tickets, status, latency] 
+X_urgency = np.array([
+    [0, 1, 10],   # No tickets, online, low latency  (Normal) -> 0
+    [5, 1, 200],  # Some tickets, online, med latency (Moderate) -> 1
+    [15, 0, 800], # Many tickets, offline, high latency (Critical) -> 1
+    [2, 0, 50],   # Few tickets, offline (Action needed) -> 1
+    [1, 1, 15]    # One ticket, online -> 0
+])
+y_urgency = np.array([0, 0, 1, 1, 0])
+urgency_model.fit(X_urgency, y_urgency)
+
+def predict_urgency(ticket_frequency: int, hardware_status_code: int, latency: float) -> float:
+    """
+    Returns a probability percentage (0-100) indicating how sure the AI is
+    that the current situation requires immediate manual support.
+    """
+    features = np.array([[ticket_frequency, hardware_status_code, latency]])
+    prob = urgency_model.predict_proba(features)[0][1] # Probability of Class '1' (Urgent)
+    return float(round(prob * 100, 2))

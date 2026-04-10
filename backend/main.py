@@ -9,8 +9,10 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from ai_engine import analyze_ticket_with_ai
-from ml_models import predict_root_cause, detect_anomaly
+from ml_models import predict_root_cause, detect_anomaly, predict_urgency
 from feedback import save_feedback
+from rag_pipeline import query_rag_pipeline
+from supabase import create_client, Client
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-key")
 ALGORITHM = "HS256"
@@ -169,3 +171,132 @@ async def solve_ticket(req: SolveTicketRequest):
 @app.get("/")
 async def root():
     return {"status": "active"}
+
+class DiagnosticsRequest(BaseModel):
+    query: str
+
+class LiveMonitoringResponse(BaseModel):
+    toll_id: int
+    urgency_percentage: float
+    timeseries: list
+
+# Initialize Supabase Client
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+supabase_client: Optional[Client] = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print(f"Failed to initialize Supabase: {e}")
+
+@app.post("/api/diagnostics")
+async def handle_diagnostics(req: DiagnosticsRequest):
+    try:
+        result = query_rag_pipeline(req.query)
+        return {
+            "status": "success",
+            "response": result
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "response": "",
+            "error": str(e)
+        }
+
+@app.get("/api/live-monitoring/{toll_id}", response_model=LiveMonitoringResponse)
+async def live_monitoring_data(toll_id: int):
+    # Simulated current hardware state to feed into the model
+    # Normally this would be retrieved from real-time Redis/IoT stream
+    import random
+    hardware_status = random.choice([0, 1])  # 0 offline, 1 online
+    latency = random.uniform(10.0, 500.0)
+
+    timeseries_data = []
+    ticket_frequency = 0
+    
+    twelve_hours_ago = (datetime.utcnow() - timedelta(hours=12)).isoformat()
+
+    if supabase_client:
+        try:
+            # Query Supabase timeseries data for IT tickets raised for this toll_id
+            response = supabase_client.table("tickets").select("*").eq("toll_id", toll_id).gte("created_at", twelve_hours_ago).execute()
+            if response.data:
+                timeseries_data = [{"id": r.get("id"), "created_at": r.get("created_at"), "issue": r.get("description")} for r in response.data]
+                ticket_frequency = len(timeseries_data)
+        except Exception as e:
+            print(f"Supabase query failed: {e}")
+            # Fallback to mock data if there's an error
+            pass
+    
+    # If no data or Supabase not initialized, mock something up for the dashboard
+    if not timeseries_data:
+        ticket_frequency = random.randint(0, 15)
+        for i in range(ticket_frequency):
+            timestamp = (datetime.utcnow() - timedelta(hours=random.uniform(0, 12))).isoformat()
+            timeseries_data.append({
+                "id": f"dummy-{i}",
+                "created_at": timestamp,
+                "issue": random.choice(["RFID Reader Offline", "Camera Glitching", "Network Timeout"])
+            })
+            
+    # Predict urgency
+    urgency = predict_urgency(ticket_frequency, hardware_status, latency)
+    
+    return {
+        "toll_id": toll_id,
+        "urgency_percentage": urgency,
+        "timeseries": timeseries_data
+    }
+
+# --- Community Tickets System ---
+community_tickets_db = [
+    {
+        "id": "ct-101",
+        "issue": "Camera Feed Loss at Pole 12",
+        "solution": "Replaced the 5V power adapter module and cleared spider webs blocking the lens.",
+        "rating": 12,
+        "comments": [{"author": "john@smartway.com", "text": "This solved my issue instantly. Thanks!", "timestamp": "1 hr ago"}],
+        "time": "2 hrs ago"
+    },
+    {
+        "id": "ct-102",
+        "issue": "RFID Delay at Gate B",
+        "solution": "Firmware was downgraded to v2.1 due to known memory leak latency in the new patch.",
+        "rating": 8,
+        "comments": [],
+        "time": "5 hrs ago"
+    }
+]
+
+@app.get("/api/community-tickets")
+async def get_community_tickets():
+    return {"status": "success", "data": community_tickets_db}
+
+@app.post("/api/community-tickets/{ticket_id}/rate")
+async def rate_community_ticket(ticket_id: str, action: dict):
+    # action contains {"type": "up" | "down"}
+    for t in community_tickets_db:
+        if t["id"] == ticket_id:
+            if action.get("type") == "up":
+                t["rating"] += 1
+            else:
+                t["rating"] -= 1
+            return {"status": "success", "data": t}
+    raise HTTPException(status_code=404, detail="Ticket not found")
+
+@app.post("/api/community-tickets/{ticket_id}/comment")
+async def comment_community_ticket(ticket_id: str, payload: dict):
+    # payload contains {"author": "...", "text": "..."}
+    for t in community_tickets_db:
+        if t["id"] == ticket_id:
+            new_comment = {
+                "author": payload.get("author", "User"),
+                "text": payload.get("text", ""),
+                "timestamp": "Just now"
+            }
+            t["comments"].append(new_comment)
+            return {"status": "success", "data": t}
+    raise HTTPException(status_code=404, detail="Ticket not found")

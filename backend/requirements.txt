@@ -11,3 +11,6 @@ python-jose[cryptography]
 passlib[bcrypt]
 bcrypt
 PyJWT
+supabase
+chromadb
+google-generativeai

@@ -20,7 +20,7 @@ def analyze_ticket_with_ai(ticket_text: str) -> dict:
         return {"type": "Software", "solution": "Initiate over-the-air firmware reversion to stable version 2.4.", "confidence": 0.81}
     try:
         msg = groq_client.chat.completions.create(
-            model="mixtral-8x7b-32768",
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "Return: {\"type\": \"Hardware/Software/Network\", \"solution\": \"action\", \"confidence\": 0.0-1.0}"},
                 {"role": "user", "content": f'Ticket: "{ticket_text}"'}

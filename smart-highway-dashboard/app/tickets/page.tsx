@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
 import TicketAnalysis from '@/components/TicketAnalysis';
+import DashboardSlidePanel from '@/components/DashboardSlidePanel';
+import CommunityTickets from '@/components/CommunityTickets';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { Ticket, CheckCircle, Clock, AlertCircle, Filter } from 'lucide-react';
 
 export default function TicketsPage() {
   const router = useRouter();
   const { isAuthenticated, isHydrated, tickets } = useApp();
+  const { t } = useLanguage();
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -56,23 +60,23 @@ export default function TicketsPage() {
   if (!isHydrated || !isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0f172a]">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0f172a]">
       <Sidebar />
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
+      <main className="ml-64 flex flex-1 flex-col h-full overflow-hidden">
         <Topbar />
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-6 pt-24 md:p-8 md:pt-28">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Support Tickets</h1>
-            <p className="text-slate-400">Manage and analyze system support tickets with AI</p>
+            <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">{t('nav.tickets')}</h1>
+            <p className="text-slate-600 dark:text-slate-400">Manage and analyze system support tickets with AI</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Tickets List */}
             <div className="lg:col-span-1">
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-white">Tickets ({filteredTickets.length})</h2>
-                  <Filter size={18} className="text-slate-400" />
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Tickets ({filteredTickets.length})</h2>
+                  <Filter size={18} className="text-slate-500 dark:text-slate-400" />
                 </div>
 
                 {/* Filter and Buttons */}
@@ -81,10 +85,10 @@ export default function TicketsPage() {
                     <button
                       key={status}
                       onClick={() => setFilterStatus(status)}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                      className={`rounded px-3 py-1 text-xs font-medium transition-all ${
                         filterStatus === status
                           ? 'bg-blue-600 text-white'
-                          : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20'
                       }`}
                     >
                       {status === 'all' ? 'All' : status.replace('_', ' ')}
@@ -98,10 +102,10 @@ export default function TicketsPage() {
                     <button
                       key={ticket.id}
                       onClick={() => setSelectedTicket(ticket)}
-                      className={`w-full p-4 rounded-lg border transition-all text-left ${
+                      className={`w-full rounded-lg border p-4 text-left transition-all ${
                         selectedTicket?.id === ticket.id
-                          ? 'bg-blue-500/20 border-blue-500/50'
-                          : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          ? 'border-blue-500/50 bg-blue-50 dark:bg-blue-500/20'
+                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -109,8 +113,8 @@ export default function TicketsPage() {
                           {getStatusIcon(ticket.status)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white truncate">{ticket.title}</p>
-                          <p className="text-xs text-slate-400 mt-1">ID: {ticket.id}</p>
+                          <p className="truncate font-medium text-slate-900 dark:text-white">{ticket.title}</p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">ID: {ticket.id}</p>
                           <div className="flex gap-2 mt-2">
                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs border ${getStatusColor(ticket.status)}`}>
                               {getStatusIcon(ticket.status)}
@@ -130,9 +134,9 @@ export default function TicketsPage() {
               {selectedTicket ? (
                 <>
                   {/* Ticket Info */}
-                  <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">{selectedTicket.title}</h3>
-                    <p className="text-slate-300 mb-6 leading-relaxed">{selectedTicket.description}</p>
+                  <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
+                    <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{selectedTicket.title}</h3>
+                    <p className="mb-6 leading-relaxed text-slate-600 dark:text-slate-300">{selectedTicket.description}</p>
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -144,22 +148,22 @@ export default function TicketsPage() {
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Assigned To</p>
-                        <p className="text-white font-medium">{selectedTicket.assignedTo || 'Unassigned'}</p>
+                        <p className="font-medium text-slate-900 dark:text-white">{selectedTicket.assignedTo || 'Unassigned'}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Created</p>
-                        <p className="text-sm text-slate-300">{new Date(selectedTicket.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">{new Date(selectedTicket.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-400 mb-1">Severity</p>
-                        <p className="text-white font-medium capitalize">{selectedTicket.severity}</p>
+                        <p className="font-medium capitalize text-slate-900 dark:text-white">{selectedTicket.severity}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* AI Analysis */}
-                  <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">AI Analysis</h3>
+                  <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
+                    <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">AI Analysis</h3>
                     <TicketAnalysis 
                       ticketDescription={selectedTicket.description}
                       onAnalysisComplete={setAnalysisResult}
@@ -173,7 +177,7 @@ export default function TicketsPage() {
                       <div className="space-y-4">
                         <div>
                           <p className="text-sm text-slate-400 mb-2">Recommended Action</p>
-                          <p className="text-white">{analysisResult.solution}</p>
+                          <p className="text-slate-800 dark:text-white">{analysisResult.solution}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
@@ -194,14 +198,19 @@ export default function TicketsPage() {
                   )}
                 </>
               ) : (
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-12 flex items-center justify-center h-full">
-                  <p className="text-slate-400">Select a ticket to view details and analysis</p>
+                <div className="flex h-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-12 dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
+                  <p className="text-slate-500 dark:text-slate-400">Select a ticket to view details and analysis</p>
                 </div>
               )}
             </div>
           </div>
+
+          <div className="mt-8">
+             <CommunityTickets />
+          </div>
         </div>
       </main>
+      <DashboardSlidePanel />
     </div>
   );
 }

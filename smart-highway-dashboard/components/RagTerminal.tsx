@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Loader, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Bot, Send, Loader, ThumbsUp, ThumbsDown, Mic, MicOff } from 'lucide-react';
 import { solveTicket } from '@/lib/api';
 import { useDashboard } from '@/context/DashboardContext';
 import { useApp } from '@/context/AppContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface Message {
   id: string;
@@ -17,6 +18,7 @@ interface Message {
 export default function RagTerminal() {
   const { ragTerminalQuery, setRagTerminalQuery } = useDashboard();
   const { submitFeedback } = useApp();
+  const { t } = useLanguage();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -28,7 +30,9 @@ export default function RagTerminal() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<Map<string, boolean>>(new Map());
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -45,6 +49,32 @@ export default function RagTerminal() {
       }
     }
   }, []);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setRagTerminalQuery((prev) => prev + (prev ? ' ' : '') + transcript);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onerror = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+  }, [setRagTerminalQuery]);
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -109,6 +139,17 @@ export default function RagTerminal() {
     }
   };
 
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -138,21 +179,21 @@ export default function RagTerminal() {
   };
 
   return (
-    <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700/50 dark:bg-slate-800/30">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Bot className="text-blue-400" size={20} />
-          <h2 className="text-lg font-semibold text-white">RAG Agent Terminal</h2>
+          <Bot className="text-blue-600 dark:text-blue-400" size={20} />
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('rag.title')}</h2>
         </div>
         <button
           onClick={clearHistory}
-          className="text-xs px-3 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded transition-colors"
+          className="rounded px-3 py-1 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
         >
-          Clear
+          {t('rag.clear')}
         </button>
       </div>
 
-      <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-lg p-4 mb-4 overflow-y-auto flex flex-col space-y-3">
+      <div className="mb-4 flex flex-1 flex-col space-y-3 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
         {messages.map((message, idx) => {
           const prevMessage = idx > 0 ? messages[idx - 1] : null;
           return (
@@ -162,12 +203,12 @@ export default function RagTerminal() {
             >
               <div>
                 <div
-                  className={`max-w-[80%] text-sm p-4 rounded-lg ${
+                  className={`max-w-[80%] rounded-lg p-4 text-sm ${
                     message.role === 'user'
                       ? 'bg-blue-600 text-white'
                       : message.error
-                      ? 'bg-red-500/10 border border-red-500/20 text-red-200'
-                      : 'bg-blue-500/10 border border-blue-500/20 text-blue-200'
+                      ? 'border border-red-200 bg-red-50 text-red-800 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200'
+                      : 'border border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200'
                   }`}
                 >
                   <p className="whitespace-pre-wrap break-words">{message.content}</p>
@@ -186,10 +227,10 @@ export default function RagTerminal() {
                           message.content
                         )
                       }
-                      className="text-xs px-2 py-1 text-slate-400 hover:text-green-400 hover:bg-slate-700/50 rounded transition-colors flex items-center space-x-1"
+                      className="flex items-center space-x-1 rounded px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-slate-200 hover:text-green-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-green-400"
                     >
                       <ThumbsUp size={14} />
-                      <span>Helpful</span>
+                      <span>{t('rag.helpful')}</span>
                     </button>
                     <button
                       onClick={() =>
@@ -200,15 +241,15 @@ export default function RagTerminal() {
                           message.content
                         )
                       }
-                      className="text-xs px-2 py-1 text-slate-400 hover:text-red-400 hover:bg-slate-700/50 rounded transition-colors flex items-center space-x-1"
+                      className="flex items-center space-x-1 rounded px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-slate-200 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-red-400"
                     >
                       <ThumbsDown size={14} />
-                      <span>Not Helpful</span>
+                      <span>{t('rag.notHelpful')}</span>
                     </button>
                   </div>
                 )}
                 {feedbackGiven.has(message.id) && (
-                  <p className="text-xs text-slate-400 mt-2">
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     {feedbackGiven.get(message.id) ? '✓ Feedback recorded (helpful)' : '✓ Feedback recorded (not helpful)'}
                   </p>
                 )}
@@ -218,7 +259,7 @@ export default function RagTerminal() {
         })}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 text-blue-200 text-sm p-4 rounded-lg">
+            <div className="flex items-center space-x-2 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
               <Loader size={16} className="animate-spin" />
               <span>Processing query...</span>
             </div>
@@ -228,14 +269,25 @@ export default function RagTerminal() {
       </div>
 
       <div className="flex space-x-2">
+        <button
+          onClick={toggleListening}
+          className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
+            isListening 
+              ? 'bg-red-500 text-white animate-pulse' 
+              : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+          }`}
+          title="Voice Input"
+        >
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+        </button>
         <input
           type="text"
-          placeholder="Describe an issue or ask a manual question..."
+          placeholder={t('rag.placeholder')}
           value={ragTerminalQuery}
           onChange={(e) => setRagTerminalQuery(e.target.value)}
           onKeyPress={handleKeyPress}
           disabled={isLoading}
-          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+          className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500"
         />
         <button
           onClick={handleSendMessage}
