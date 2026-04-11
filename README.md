@@ -169,8 +169,4 @@ The AI terminal is powered by a Retrieval-Augmented Generation (RAG) pipeline:
 | **ML** | scikit-learn (anomaly detection) |
 | **State** | React Context API |
 
----
 
-## 📄 License
-
-MIT License — built for the Code Ninjas Hackzion hackathon.
