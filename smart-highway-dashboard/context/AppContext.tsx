@@ -210,7 +210,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const submitFeedback = async (ticketQuery: string, solution: string, wasSuccessful: boolean) => {
     try {
-      const response = await fetch('http://127.0.0.1:8001/api/feedback', {
+      const response = await fetch('http://127.0.0.1:8000/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -227,7 +227,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const fetchCommunityTickets = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8001/api/community-tickets');
+      const response = await fetch('http://127.0.0.1:8000/api/community-tickets');
       const data = await response.json();
       if (data.status === 'success') {
         setCommunityTickets(data.data);
@@ -239,7 +239,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const createCommunityTicket = async (issue: string, solution: string) => {
     try {
-      const res = await fetch('http://127.0.0.1:8001/api/community-tickets/new', {
+      const res = await fetch('http://127.0.0.1:8000/api/community-tickets/new', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issue, solution })
@@ -256,7 +256,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const rateCommunityTicket = async (id: string, type: 'up' | 'down') => {
     setCommunityTickets(prev => prev.map(t => t.id === id ? { ...t, rating: type === 'up' ? t.rating + 1 : t.rating - 1 } : t));
     try {
-      await fetch(`http://127.0.0.1:8001/api/community-tickets/${id}/rate`, {
+      await fetch(`http://127.0.0.1:8000/api/community-tickets/${id}/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type })
@@ -268,7 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const commentCommunityTicket = async (id: string, text: string) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8001/api/community-tickets/${id}/comment`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/community-tickets/${id}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ author: user?.email || 'User', text })
