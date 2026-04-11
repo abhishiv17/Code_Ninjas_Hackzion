@@ -1,448 +1,176 @@
-# 🛣️ OmniSolve: Smart Highway AI Assistant
+# 🚦 Smart Highway Intelligence Platform
 
-> **AI-Powered Intelligent Ticket Routing & Resolution Agent**  
-> Bridging the IT/OT Knowledge Gap in Smart Infrastructure
-
-[![Status](https://img.shields.io/badge/Status-Active-green)](#) [![Python](https://img.shields.io/badge/Python-3.13-blue)](#) [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009485)](#) [![Groq](https://img.shields.io/badge/LLM-Groq-black)](#)
+An AI-powered smart highway monitoring and management system built for the **Code Ninjas Hackzion** hackathon. The platform provides real-time traffic monitoring, anomaly detection, community issue ticketing, and a RAG-powered AI assistant for highway infrastructure queries.
 
 ---
 
-## 🎯 Why This Project?
-
-In modern Smart Highway systems, field engineers face a critical **"Knowledge Gap"** between:
-- **Physical Infrastructure (OT):** Sensors, controllers, power systems
-- **Digital Management Systems (IT):** APIs, databases, monitoring dashboards
-
-**OmniSolve** eliminates this gap by providing **instant, AI-powered solutions** that combine:
-- 📚 **Technical Knowledge:** 505+ PDF segments of infrastructure protocols
-- 🧠 **Intelligent AI:** Groq LLM + Machine Learning models
-- ⚡ **Real-time Insights:** Root cause prediction + anomaly detection
-
-**Impact:** Reduces Mean Time To Resolution (MTTR) from hours to minutes, potentially saving lives and infrastructure damage.
-
----
-
-## ✨ Key Features
-
-### 🤖 Three-Tier AI System
-
-| Tier | Technology | Purpose | Speed |
-|------|-----------|---------|-------|
-| **1. Intelligent Analysis** | Groq Mixtral LLM | Analyzes ticket descriptions | 500-3000ms |
-| **2. Root Cause Prediction** | RandomForest ML | Identifies root cause | 5-50ms ⚡ |
-| **3. Anomaly Detection** | Isolation Forest ML | Detects abnormal readings | 1-10ms ⚡⚡ |
-
-### 🎆 Full-Stack Features
-
-✅ **RAG System** - ChromaDB vector store with 505+ curated PDF segments  
-✅ **LLM Integration** - Groq Mixtral for intelligent analysis  
-✅ **ML Models** - Loaded at startup, zero-latency predictions  
-✅ **FastAPI Backend** - 3 intelligent endpoints  
-✅ **Next.js Dashboard** - Real-time monitoring UI  
-✅ **Interactive Docs** - Swagger UI for API exploration  
-✅ **Environment-Safe** - Secure API key management  
-✅ **Graceful Fallbacks** - Works even with API outages  
-
----
-
-## 🏗️ System Architecture
+## 🏗️ Project Structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    FRONTEND (Next.js)                       │
-│              smart-highway-dashboard/                       │
-│         Real-time monitoring & ticket submission            │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTP/JSON
-┌────────────────────▼────────────────────────────────────────┐
-│                  BACKEND API (FastAPI)                      │
-│                 http://127.0.0.1:8001                       │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  POST /analyze ────────► Groq LLM Analysis           │   │
-│  │  POST /predict-root-cause ──► ML Root Cause (RF)    │   │
-│  │  POST /detect-anomaly ──► ML Anomaly (IsoForest)    │   │
-│  └──────────────────────────────────────────────────────┘   │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-    ┌────────┐  ┌────────┐  ┌──────────┐
-    │ Groq   │  │ ML     │  │ ChromaDB │
-    │ LLM    │  │ Models │  │ RAG      │
-    │(API)   │  │(Memory)│  │Database  │
-    └────────┘  └────────┘  └──────────┘
+Code_Ninjas_Hackzion/
+├── smart-highway-dashboard/     # Next.js 14 frontend (main app)
+│   ├── app/                     # App router pages & layouts
+│   │   ├── dashboard/           # Main dashboard page
+│   │   ├── monitoring/          # Live monitoring page
+│   │   ├── tickets/             # Community tickets page
+│   │   ├── login/               # Authentication pages
+│   │   └── layout.tsx           # Root layout
+│   ├── components/              # Reusable UI components
+│   │   ├── DashboardSlidePanel.tsx
+│   │   ├── LiveMonitoringDashboard.tsx
+│   │   ├── RagTerminal.tsx
+│   │   ├── CommunityTickets.tsx
+│   │   ├── TicketAnalysis.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── Topbar.tsx
+│   │   ├── SystemAlerts.tsx
+│   │   ├── StatCard.tsx
+│   │   └── ErrorBoundary.tsx
+│   ├── context/                 # React contexts (App, Theme, Language, Dashboard)
+│   ├── lib/                     # API client, helpers, icons
+│   ├── public/                  # Static assets
+│   ├── middleware.ts             # Auth middleware
+│   ├── next.config.ts
+│   ├── tailwind.config.ts
+│   └── package.json
+│
+├── backend/                     # Python FastAPI backend
+│   ├── main.py                  # FastAPI app & all API routes
+│   ├── ai_engine.py             # AI/LLM integration
+│   ├── rag_pipeline.py          # RAG pipeline (ChromaDB + embeddings)
+│   ├── ml_models.py             # ML anomaly detection models
+│   ├── auth.py                  # JWT authentication
+│   ├── database.py              # Database connection
+│   ├── feedback.py              # Feedback endpoints
+│   └── requirements.txt         # Python dependencies
+│
+├── docs/                        # Source PDFs for RAG knowledge base
+│   ├── EPAC600-ATC-m60-User-Manual-PIM302.pdf
+│   ├── b-cisco-ie-4000-hig.pdf
+│   └── flir-fc-series-id-installation-manual.pdf
+│
+├── .env.example                 # Environment variable template
+├── .gitignore
+├── requirements.txt             # Root-level Python requirements
+└── README.md
 ```
 
 ---
 
-## 🚀 Quick Start
+## ✨ Features
+
+- 📊 **Real-time Dashboard** — Live highway stats, camera feeds, and sensor telemetry
+- 🔴 **Live Monitoring** — Node maps, anomaly detection, system alerts
+- 🤖 **RAG AI Terminal** — Query highway documentation using an LLM + RAG pipeline
+- 🎫 **Community Tickets** — Report and track road/infrastructure issues
+- 🌐 **Multi-language Support** — i18n-ready UI
+- 🌙 **Dark/Light Theme** — User-configurable themes
+- 🔐 **JWT Authentication** — Secure login with token-based sessions
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.13+
-- Node.js 18+ (for frontend)
-- Groq API Key (free tier available)
 
-### 1️⃣ Backend Setup (AI Engine)
+- Node.js 18+ and npm
+- Python 3.10+
+- An OpenAI or compatible LLM API key
+
+---
+
+### 1. Backend Setup
 
 ```bash
-# Navigate to backend
-cd backend
-
-# Create .env file with your Groq API key
-echo 'GROQ_API_KEY=gsk_your_key_here' > .env
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate        # Linux/macOS
+venv\Scripts\activate           # Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Start the server
-python -m uvicorn main:app --reload --port 8001
+# Copy and configure environment variables
+cp .env.example backend/.env
+# Edit backend/.env with your API keys and DB settings
+
+# Start the FastAPI server
+cd backend
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**✅ Server running:** http://127.0.0.1:8001
+The backend API will be available at `http://localhost:8000`.  
+Interactive docs at `http://localhost:8000/docs`.
 
-### 2️⃣ Frontend Setup (Dashboard)
+---
+
+### 2. Frontend Setup
 
 ```bash
-# Navigate to frontend
 cd smart-highway-dashboard
+
+# Copy and configure environment variables
+cp .env.local.example .env.local    # or use the provided .env.local
+# Set NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # Install dependencies
 npm install
 
-# Start development server
+# Start the development server
 npm run dev
 ```
 
-**✅ Dashboard running:** http://localhost:3000
-
-### 3️⃣ Test the API
-
-**Interactive API Docs:**
-```
-http://127.0.0.1:8001/docs
-```
-
-**PowerShell Test:**
-```powershell
-# Analyze a ticket
-$body = @{ticket="sensor overheating detected"} | ConvertTo-Json
-Invoke-WebRequest -Uri "http://127.0.0.1:8001/analyze" `
-  -Method POST -ContentType "application/json" -Body $body
-```
+The frontend will be available at `http://localhost:3000`.
 
 ---
 
-## 📡 API Endpoints
+## ⚙️ Environment Variables
 
-### 🔵 POST `/analyze` - AI Ticket Analysis
+### Backend (`backend/.env`)
 
-Analyzes ticket descriptions using Groq LLM.
+| Variable | Description |
+|---|---|
+| `SECRET_KEY` | JWT signing secret |
+| `OPENAI_API_KEY` | OpenAI API key for LLM |
+| `DATABASE_URL` | Database connection string |
+| `CHROMA_PERSIST_DIR` | ChromaDB persistence directory |
 
-**Request:**
-```json
-{
-  "ticket": "sensor overheating in lane 3 detection unit"
-}
-```
+### Frontend (`smart-highway-dashboard/.env.local`)
 
-**Response:**
-```json
-{
-  "type": "Hardware",
-  "solution": "Replace overheating sensor and check cooling system",
-  "confidence": 0.92
-}
-```
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Backend API base URL |
+
+See `.env.example` for a full template.
 
 ---
 
-### 🟢 POST `/predict-root-cause` - ML Root Cause Prediction
+## 🧠 RAG Pipeline
 
-Predicts root cause from symptom description.
+The AI terminal is powered by a Retrieval-Augmented Generation (RAG) pipeline:
 
-**Request:**
-```json
-{
-  "description": "sensor timeout api error"
-}
-```
+1. **PDF Ingestion** — Technical manuals in `docs/` are chunked and embedded on first run
+2. **Vector Storage** — Embeddings stored in ChromaDB (auto-created on first run)
+3. **Query** — User queries are matched against relevant document chunks
+4. **LLM Response** — The LLM generates an answer grounded in retrieved context
 
-**Response:**
-```json
-{
-  "root_cause": "software_timeout",
-  "confidence": 0.87
-}
-```
-
-**Possible Root Causes:**
-- `fuse_failure` - Electrical/power issues
-- `software_timeout` - API/communication errors
-- `power_failure` - Complete power loss
-- `relay_fault` - Relay/switch malfunction
+> The `chroma_db/` directory is auto-generated by the backend when first run. It is excluded from version control.
 
 ---
 
-### 🟡 POST `/detect-anomaly` - Anomaly Detection
+## 🛠️ Tech Stack
 
-Detects abnormal temperature and voltage readings.
-
-**Request:**
-```json
-{
-  "temperature": 35.5,
-  "voltage": 215
-}
-```
-
-**Response:**
-```json
-{
-  "status": "anomaly"
-}
-```
-
-**Normal Ranges:**
-- Temperature: 39-42°C
-- Voltage: 219-222V
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 14, TypeScript, Tailwind CSS |
+| **Backend** | Python, FastAPI, Uvicorn |
+| **AI / RAG** | LangChain, ChromaDB, OpenAI |
+| **Auth** | JWT (python-jose) |
+| **ML** | scikit-learn (anomaly detection) |
+| **State** | React Context API |
 
 ---
 
-## 📁 Project Structure
+## 📄 License
 
-```
-Code_Ninjas_Hackzion/
-│
-├── 📄 README.md (this file)
-├── 📄 .env (your Groq API key - create this)
-│
-├── 🔙 backend/
-│   ├── main.py                 # FastAPI app with 3 endpoints
-│   ├── ai_engine.py            # Groq LLM integration
-│   ├── ml_models.py            # ML models (RF + IsoForest)
-│   ├── requirements.txt         # Python dependencies
-│   │
-│   ├── 📚 Documentation:
-│   ├── QUICKSTART.md           # 2-step setup guide
-│   ├── API_TESTING_GUIDE.md    # Testing endpoints
-│   ├── REFACTORING_SUMMARY.md  # Technical overview
-│   ├── ARCHITECTURE.md         # System design
-│   ├── STRUCTURE_CHANGES.md    # What changed
-│   └── FINAL_SUMMARY.md        # Complete reference
-│
-├── 🎨 frontend/
-│   ├── Next.js dashboard
-│   ├── Real-time ticket monitoring
-│   └── RAG terminal integration
-│
-├── 🛣️ smart-highway-dashboard/
-│   ├── Next.js App Router
-│   ├── Tailwind CSS v4
-│   ├── RAG Terminal component
-│   └── API integration
-│
-├── 📊 brains.py               # RAG system (ChromaDB)
-└── 📡 api.py                  # Legacy API (root directory)
-```
-
----
-
-## 🛠️ Technology Stack
-
-### Backend
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Framework** | FastAPI | REST API server |
-| **LLM** | Groq Mixtral 8x7b | Intelligent analysis |
-| **ML Models** | scikit-learn | Root cause + anomaly detection |
-| **Vector DB** | ChromaDB | RAG knowledge base |
-| **Embeddings** | Sentence Transformers | PDF chunking |
-| **Language** | Python 3.13 | Backend runtime |
-
-### Frontend
-
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Framework** | Next.js 13+ | React app |
-| **Styling** | Tailwind CSS v4 | UI components |
-| **Language** | TypeScript | Type safety |
-| **API Client** | Fetch API | Backend communication |
-
----
-
-## 🔑 Environment Variables
-
-Create a `.env` file in the root directory:
-
-```bash
-# Groq API Key (required for /analyze endpoint)
-# Get free key: https://console.groq.com/keys
-GROQ_API_KEY=gsk_your_groq_api_key_here
-```
-
-**Without this key:**
-- ✅ `/predict-root-cause` still works (ML model)
-- ✅ `/detect-anomaly` still works (ML model)
-- ⚠️ `/analyze` returns fallback response (keyword-based)
-
----
-
-## 🚦 Current Progress
-
-| Feature | Status | Details |
-|---------|--------|---------|
-| PDF Data Extraction | ✅ Complete | 505+ segments processed |
-| Vector Embeddings | ✅ Complete | ChromaDB indexed |
-| LLM Connection | ✅ Complete | Groq Mixtral integrated |
-| ML Root Cause Model | ✅ Complete | RandomForest trained |
-| ML Anomaly Detection | ✅ Complete | IsolationForest deployed |
-| FastAPI Backend | ✅ Complete | 3 endpoints live |
-| Frontend Dashboard | ✅ Complete | Next.js + Tailwind |
-| Interactive Docs | ✅ Complete | Swagger at /docs |
-| Graceful Fallbacks | ✅ Complete | API outage safe |
-
----
-
-## 💡 How to Use
-
-### For Field Engineers
-
-1. **Submit Issue:** Use dashboard to describe infrastructure problem
-2. **Get Solution:** AI provides instant analysis + root cause
-3. **Check Anomalies:** Monitor sensor readings for abnormalities
-4. **Take Action:** Follow recommended solutions
-
-### For Developers
-
-**Test Root Cause Prediction:**
-```bash
-cd backend
-python
-```
-
-```python
-from ml_models import predict_root_cause
-result = predict_root_cause("sensor timeout api error")
-print(result)  # ("software_timeout", 0.87)
-```
-
-**Test Anomaly Detection:**
-```python
-from ml_models import detect_anomaly
-status = detect_anomaly(35.5, 215)
-print(status)  # "anomaly"
-```
-
----
-
-## 📊 Performance Metrics
-
-| Endpoint | Response Time | Model Type | Reliability |
-|----------|--------------|-----------|------------|
-| `/analyze` | 500-3000ms | Groq LLM (API) | Graceful fallback |
-| `/predict-root-cause` | 5-50ms | ML in-memory | 100% |
-| `/detect-anomaly` | 1-10ms | ML in-memory | 100% |
-
-**Why ML endpoints are instant:**
-- Models loaded at server startup
-- In-memory (no disk I/O)
-- Pure CPU inference (microseconds)
-
----
-
-## 🔧 Development
-
-### Adding New Features
-
-1. **New ML Model?** → Edit `backend/ml_models.py`
-2. **New API Endpoint?** → Edit `backend/main.py`
-3. **New Dashboard Page?** → Add component to `frontend/app/`
-4. **New RAG Knowledge?** → Add PDFs and reprocess `brains.py`
-
-### Running Tests
-
-```bash
-# Backend tests
-cd backend
-python -m pytest
-
-# Frontend tests
-cd smart-highway-dashboard
-npm test
-```
-
----
-
-## 📚 Documentation
-
-Comprehensive guides in `backend/`:
-
-- **[QUICKSTART.md](backend/QUICKSTART.md)** - 2-step setup
-- **[API_TESTING_GUIDE.md](backend/API_TESTING_GUIDE.md)** - API examples
-- **[REFACTORING_SUMMARY.md](backend/REFACTORING_SUMMARY.md)** - Technical deep-dive
-- **[ARCHITECTURE.md](backend/ARCHITECTURE.md)** - System design
-- **[STRUCTURE_CHANGES.md](backend/STRUCTURE_CHANGES.md)** - File organization
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is part of Code Ninjas Hackzion 2026.
-
----
-
-## 🔗 Quick Links
-
-- 🌐 **API Docs:** http://127.0.0.1:8001/docs
-- 🎨 **Dashboard:** http://localhost:3000
-- 🔑 **Get Groq Key:** https://console.groq.com/keys
-- 📖 **Backend Guides:** `backend/` directory
-- 🧠 **RAG System:** `brains.py`
-
----
-
-## ⚡ Key Improvements (Recent Updates)
-
-✅ **Switched to Groq LLM** - Faster inference, free tier available  
-✅ **ML Model Caching** - Models load at startup (zero delay)  
-✅ **3 Intelligent Endpoints** - Analysis + Prediction + Anomaly  
-✅ **Full Documentation** - 6 comprehensive guides  
-✅ **Production Ready** - Error handling + fallbacks  
-✅ **Interactive API Docs** - Test endpoints directly  
-
----
-
-## 🎓 What's Next?
-
-- [ ] Deploy to production (AWS/GCP)
-- [ ] Add real-time notifications
-- [ ] Expand ML training data
-- [ ] Mobile app for field engineers
-- [ ] Advanced analytics dashboard
-- [ ] Historical ticket analytics
-
----
-
-## 📧 Support
-
-For issues or questions:
-1. Check documentation in `backend/`
-2. Review API docs at `/docs`
-3. Check existing issues/discussions
-4. Open a new issue with details
-
----
-
-**Built with ❤️ for Smart Infrastructure**  
-*Reducing MTTR. Saving infrastructure. Saving lives.*
+MIT License — built for the Code Ninjas Hackzion hackathon.
