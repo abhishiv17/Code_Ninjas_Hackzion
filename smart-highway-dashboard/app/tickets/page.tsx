@@ -13,7 +13,7 @@ import { Ticket, CheckCircle, Clock, AlertCircle, Filter } from 'lucide-react';
 
 export default function TicketsPage() {
   const router = useRouter();
-  const { isAuthenticated, isHydrated, tickets } = useApp();
+  const { isAuthenticated, isHydrated, tickets, sidebarOpen } = useApp();
   const { t } = useLanguage();
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all');
@@ -62,7 +62,7 @@ export default function TicketsPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0f172a]">
       <Sidebar />
-      <main className="ml-64 flex flex-1 flex-col h-full overflow-hidden">
+      <main className={`flex flex-1 flex-col h-full overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
         <Topbar />
         <div className="flex-1 overflow-y-auto p-6 pt-24 md:p-8 md:pt-28">
           <div className="mb-8">

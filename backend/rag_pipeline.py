@@ -1,6 +1,9 @@
 import os
+from dotenv import load_dotenv
 import chromadb
 from groq import Groq
+
+load_dotenv()
 
 # Initialize ChromaDB client (in-memory for demo purposes)
 chroma_client = chromadb.Client()

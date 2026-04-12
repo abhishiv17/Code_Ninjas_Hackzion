@@ -3,5 +3,10 @@
     "query": "How do I fix: Camera Feed Loss at Pole 12?",
     "solution": "Error connecting to Groq API: Error code: 400 - {'error': {'message': 'The model `mixtral-8x7b-32768` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}",
     "success": false
+  },
+  {
+    "query": "what is my name?",
+    "solution": "[Mock Response - No GROQ_API_KEY found]\n\nBased on your query regarding \"what is my name?\", here is a simulated diagnostic:\n\nRelevant Context Found:\n- RFID Reader Manual: A failure to read tags often indicates a disconnected antenna or power failure at the main junction. Check connections.\n- Camera Manual: If the camera feed is distorted with horizontal lines, check the grounding of the power supply.\n- Network Switch Manual: If latency exceeds 500ms, the switch might be dropping packets due to bad buffer configurations. Restart the network interfaces.\n\n1. Ensure power supply is stable.\n2. Attempt a soft reset of the device.\n3. Check cables and physical connections.\n\nEnsure you configure a real GROQ_API_KEY to see dynamic AI answers.",
+    "success": false
   }
 ]
