@@ -164,6 +164,7 @@ DATABASE_URL=postgresql://admin:admin123@postgres:5432/smarthighway
 ### `smart-highway-dashboard/.env.local`
 
 ```env
+NEXT_PUBLIC_API_URL=           # http://127.0.0.1:8000 (local) or https://your-backend.onrender.com (prod)
 AUTH0_SECRET=                  # 32+ char random string
 AUTH0_BASE_URL=                # http://localhost:3000
 AUTH0_ISSUER_BASE_URL=         # https://your-tenant.us.auth0.com

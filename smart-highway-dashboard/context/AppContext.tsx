@@ -4,6 +4,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { apiClient } from '@/lib/api-client';
 import { useUser } from '@auth0/nextjs-auth0/client';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 export interface User {
   email: string;
   name: string;
@@ -118,7 +120,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const loadDBTickets = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/tickets');
+      const res = await fetch(`${API_BASE_URL}/api/tickets`);
       if (res.ok) setTickets(await res.json());
     } catch {}
   };
@@ -162,14 +164,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const establishSSE = () => {
       // Standard HTTP fetch for initial data & health check
-      fetch(`http://127.0.0.1:8000/api/live-monitoring/${currentTollId}`)
+      fetch(`${API_BASE_URL}/api/live-monitoring/${currentTollId}`)
         .then(res => {
            if(res.ok) setBackendOnline(true);
            else setBackendOnline(false);
         }).catch(() => setBackendOnline(false));
 
       // Open SSE connection for real-time 2-second telemetry without polling
-      eventSource = new EventSource(`http://127.0.0.1:8000/api/live-monitoring-stream/${currentTollId}`);
+      eventSource = new EventSource(`${API_BASE_URL}/api/live-monitoring-stream/${currentTollId}`);
       
       eventSource.onmessage = (event) => {
         try {
@@ -213,7 +215,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const createTicket = async (ticket: Omit<TicketData, 'id' | 'createdAt'>) => {
     try {
-      await fetch('http://127.0.0.1:8000/api/tickets', {
+      await fetch(`${API_BASE_URL}/api/tickets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -232,12 +234,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const resolveTicket = async (id: string) => {
-    await fetch(`http://127.0.0.1:8000/api/tickets/${id}/resolve`, { method: 'PUT' });
+    await fetch(`${API_BASE_URL}/api/tickets/${id}/resolve`, { method: 'PUT' });
     loadDBTickets();
   };
 
   const assignTicket = async (id: string, assignedTo: string) => {
-    await fetch(`http://127.0.0.1:8000/api/tickets/${id}/assign`, {
+    await fetch(`${API_BASE_URL}/api/tickets/${id}/assign`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user: assignedTo })
@@ -247,7 +249,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const submitFeedback = async (ticketQuery: string, solution: string, wasSuccessful: boolean) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/feedback', {
+      const response = await fetch(`${API_BASE_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -264,7 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const fetchCommunityTickets = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/community-tickets');
+      const response = await fetch(`${API_BASE_URL}/api/community-tickets`);
       const data = await response.json();
       if (data.status === 'success') {
         setCommunityTickets(data.data);
@@ -276,7 +278,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const createCommunityTicket = async (issue: string, solution: string) => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/community-tickets/new', {
+      const res = await fetch(`${API_BASE_URL}/api/community-tickets/new`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ issue, solution })
@@ -293,7 +295,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const rateCommunityTicket = async (id: string, type: 'up' | 'down') => {
     setCommunityTickets(prev => prev.map(t => t.id === id ? { ...t, rating: type === 'up' ? t.rating + 1 : t.rating - 1 } : t));
     try {
-      await fetch(`http://127.0.0.1:8000/api/community-tickets/${id}/rate`, {
+      await fetch(`${API_BASE_URL}/api/community-tickets/${id}/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type })
@@ -305,7 +307,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const commentCommunityTicket = async (id: string, text: string) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/community-tickets/${id}/comment`, {
+      const res = await fetch(`${API_BASE_URL}/api/community-tickets/${id}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ author: user?.email || 'User', text })
