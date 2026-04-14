@@ -284,6 +284,40 @@ async def live_monitoring_data(toll_id: int):
         "uptime": uptime
     }
 
+@app.get("/api/live-monitoring-stream/{toll_id}")
+async def live_monitoring_stream(toll_id: int):
+    async def event_generator():
+        import asyncio, json, random
+        while True:
+            hardware_status = random.choice([1, 1, 1, 0]) # mostly online
+            latency = random.uniform(10.0, 500.0)
+            ticket_frequency = random.randint(0, 15)
+            urgency = predict_urgency(ticket_frequency, hardware_status, latency)
+            
+            if hardware_status == 0:
+                active_vehicles = 0
+                sensors_online = 0
+                uptime = "0.0%"
+            else:
+                base_vehicles = 1200 * toll_id
+                active_vehicles = base_vehicles + random.randint(-200, 200)
+                sensors_online = random.randint(85, 100)
+                uptime = "99.8%"
+
+            data = {
+                "toll_id": toll_id,
+                "urgency_percentage": urgency,
+                "active_vehicles": active_vehicles,
+                "latency": latency,
+                "sensors_online": sensors_online,
+                "uptime": uptime,
+                "timeseries": [] # We don't push heavy timeseries in the high-freq stream
+            }
+            yield f"data: {json.dumps(data)}\n\n"
+            await asyncio.sleep(2)
+            
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 # --- Community Tickets System ---
 community_tickets_db = [
     {

@@ -14,3 +14,4 @@ PyJWT
 supabase
 chromadb
 google-generativeai
+rank_bm25

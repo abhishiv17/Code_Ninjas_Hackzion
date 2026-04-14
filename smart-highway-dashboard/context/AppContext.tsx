@@ -210,32 +210,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsHydrated(true);
   }, []);
 
-  // Check Backend Health & Fetch Specific Toll Stats
+  // Check Backend Health & Establish SSE Telemetry Stream
   useEffect(() => {
-    const fetchTollData = async () => {
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/api/live-monitoring/${currentTollId}`);
-        if(response.ok) {
-           const data = await response.json();
-           setBackendOnline(true);
-           setSystemHealth({
-             uptime: data.uptime,
-             activeVehicles: data.active_vehicles,
-             latency: Math.round(data.latency),
-             sensorsOnline: data.sensors_online
-           });
-        } else {
-           setBackendOnline(false);
+    let eventSource: EventSource | null = null;
+
+    const establishSSE = () => {
+      // Standard HTTP fetch for initial data & health check
+      fetch(`http://127.0.0.1:8000/api/live-monitoring/${currentTollId}`)
+        .then(res => {
+           if(res.ok) setBackendOnline(true);
+           else setBackendOnline(false);
+        }).catch(() => setBackendOnline(false));
+
+      // Open SSE connection for real-time 2-second telemetry without polling
+      eventSource = new EventSource(`http://127.0.0.1:8000/api/live-monitoring-stream/${currentTollId}`);
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setBackendOnline(true);
+          setSystemHealth({
+            uptime: data.uptime,
+            activeVehicles: data.active_vehicles,
+            latency: Math.round(data.latency),
+            sensorsOnline: data.sensors_online
+          });
+        } catch (e) {
+          // parse silently fails
         }
-      } catch {
+      };
+
+      eventSource.onerror = () => {
         setBackendOnline(false);
         setSystemHealth({ uptime: 'Offline', activeVehicles: 0, latency: 0, sensorsOnline: 0 });
-      }
+        eventSource?.close();
+      };
     };
 
-    fetchTollData();
-    const interval = setInterval(fetchTollData, 10000); // Check every 10 seconds
-    return () => clearInterval(interval);
+    establishSSE();
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
   }, [currentTollId]);
 
   const login = (token: string, userData: any) => {
