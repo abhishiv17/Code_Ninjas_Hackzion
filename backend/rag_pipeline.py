@@ -7,11 +7,17 @@ from groq import Groq
 
 load_dotenv()
 
-# Initialize ChromaDB client (in-memory for demo purposes)
-chroma_client = chromadb.Client()
+DISABLE_ML = os.getenv("DISABLE_ML", "false").lower() == "true"
 
-# Create or get collection
-collection = chroma_client.get_or_create_collection(name="hardware_manuals")
+# Initialize ChromaDB client (in-memory for demo purposes)
+if not DISABLE_ML:
+    chroma_client = chromadb.Client()
+    # Create or get collection
+    collection = chroma_client.get_or_create_collection(name="hardware_manuals")
+else:
+    chroma_client = None
+    collection = None
+
 
 # In-memory BM25 corpus synced with ChromaDB documents
 _bm25_corpus: list[str] = []
@@ -30,7 +36,30 @@ def _build_bm25(corpus: list[list[str]]):
         return None
 
 # Seed mock documents if empty
-if collection.count() == 0:
+if not DISABLE_ML:
+    if collection.count() == 0:
+        mock_documents = [
+            "Network Switch Manual: To reset the switch, hold the small push button located on the front panel for 10 seconds. Check indicator lights. Solid green means connected.",
+            "Network Switch Manual: If latency exceeds 500ms, the switch might be dropping packets due to bad buffer configurations. Restart the network interfaces.",
+            "RFID Reader Manual: A failure to read tags often indicates a disconnected antenna or power failure at the main junction. Check connections.",
+            "RFID Reader Manual: If the RFID reader shows error code E-404, it means the reader cannot communicate with the central database.",
+            "Camera Manual: Blurry images indicate lens contamination, while no feed usually points to a dead PoE injector or cut ethernet cable.",
+            "Camera Manual: If the camera feed is distorted with horizontal lines, check the grounding of the power supply.",
+            "EPAC600-ATC Manual: The EPAC600 controller uses a CAN bus protocol. Error code 0x02 indicates bus-off state, requiring a node restart.",
+            "Boom Barrier Manual: If the barrier fails to open after successful RFID scan, check the motor relay on terminal block TB3.",
+            "Cisco IE-4000 Manual: To configure VLAN trunking, use the interface command: switchport mode trunk; switchport trunk allowed vlan all.",
+            "FLIR Camera Manual: Night vision mode activates automatically below 0.1 lux. Manual override available via ONVIF command set.",
+        ]
+        ids = [f"doc_{i}" for i in range(len(mock_documents))]
+        collection.add(documents=mock_documents, ids=ids)
+        _bm25_corpus.extend(mock_documents)
+        _bm25_ids.extend(ids)
+    else:
+        # Sync existing corpus into BM25 memory store
+        existing = collection.get()
+        _bm25_corpus.extend(existing.get("documents", []))
+        _bm25_ids.extend(existing.get("ids", []))
+else:
     mock_documents = [
         "Network Switch Manual: To reset the switch, hold the small push button located on the front panel for 10 seconds. Check indicator lights. Solid green means connected.",
         "Network Switch Manual: If latency exceeds 500ms, the switch might be dropping packets due to bad buffer configurations. Restart the network interfaces.",
@@ -44,24 +73,19 @@ if collection.count() == 0:
         "FLIR Camera Manual: Night vision mode activates automatically below 0.1 lux. Manual override available via ONVIF command set.",
     ]
     ids = [f"doc_{i}" for i in range(len(mock_documents))]
-    collection.add(documents=mock_documents, ids=ids)
     _bm25_corpus.extend(mock_documents)
     _bm25_ids.extend(ids)
-else:
-    # Sync existing corpus into BM25 memory store
-    existing = collection.get()
-    _bm25_corpus.extend(existing.get("documents", []))
-    _bm25_ids.extend(existing.get("ids", []))
 
 
 def add_knowledge(text: str, metadata: dict = None):
     """Inject a new document into the ChromaDB Knowledge Base dynamically and update BM25 corpus."""
     doc_id = f"custom_doc_{int(time.time() * 1000)}"
-    collection.add(
-        documents=[text],
-        metadatas=[metadata or {}],
-        ids=[doc_id]
-    )
+    if not DISABLE_ML:
+        collection.add(
+            documents=[text],
+            metadatas=[metadata or {}],
+            ids=[doc_id]
+        )
     # Also add to the in-memory BM25 corpus
     _bm25_corpus.append(text)
     _bm25_ids.append(doc_id)
@@ -73,9 +97,11 @@ def hybrid_retrieve(user_query: str, n_results: int = 4) -> list[str]:
     Returns the top-N deduplicated results ranked by a combined score.
     """
     # --- 1. Semantic Search (ChromaDB) ---
-    vector_results = collection.query(query_texts=[user_query], n_results=min(n_results, collection.count()))
-    vector_docs = vector_results.get("documents", [[]])[0]
-    vector_ids = vector_results.get("ids", [[]])[0]
+    vector_docs = []
+    if not DISABLE_ML and collection:
+        vector_results = collection.query(query_texts=[user_query], n_results=min(n_results, collection.count()))
+        vector_docs = vector_results.get("documents", [[]])[0]
+        vector_ids = vector_results.get("ids", [[]])[0]
 
     # --- 2. Keyword Search (BM25) ---
     bm25_docs = []
