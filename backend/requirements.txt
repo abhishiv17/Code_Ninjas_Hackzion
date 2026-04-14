@@ -15,3 +15,5 @@ supabase
 chromadb
 google-generativeai
 rank_bm25
+sqlalchemy
+psycopg2-binary

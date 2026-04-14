@@ -10,9 +10,31 @@ services:
       - "8000:8000"
     environment:
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/smarthighway
     volumes:
       - ./backend/data:/app/data
       - ./backend/chroma_db:/app/chroma_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: smart-highway-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=smarthighway
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d smarthighway"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   frontend:
@@ -27,3 +49,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  db_data:

@@ -6,6 +6,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { UserProvider } from '@auth0/nextjs-auth0/client';
 
 // Loading the Inter font for a clean, modern dashboard look
 const inter = Inter({ subsets: ["latin"] });
@@ -27,17 +28,19 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f172a" />
       </head>
       <body className={inter.className}>
-        <ErrorBoundary>
-          <LanguageProvider>
-            <ThemeProvider>
-              <AppProvider>
-                <DashboardProvider>
-                  {children}
-                </DashboardProvider>
-              </AppProvider>
-            </ThemeProvider>
-          </LanguageProvider>
-        </ErrorBoundary>
+        <UserProvider>
+          <ErrorBoundary>
+            <LanguageProvider>
+              <ThemeProvider>
+                <AppProvider>
+                  <DashboardProvider>
+                    {children}
+                  </DashboardProvider>
+                </AppProvider>
+              </ThemeProvider>
+            </LanguageProvider>
+          </ErrorBoundary>
+        </UserProvider>
       </body>
     </html>
   );

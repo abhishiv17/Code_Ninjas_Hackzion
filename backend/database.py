@@ -1,43 +1,18 @@
-import sqlite3
 import os
-from contextlib import contextmanager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-DB_FILE = os.path.join(os.path.dirname(__file__), "omnisolve.db")
+# Fallback to localhost if not running in docker for local dev script testing
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:admin123@localhost:5432/smarthighway")
 
-def init_db():
-    with get_db() as conn:
-        cursor = conn.cursor()
-        # Users table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                hashed_password TEXT NOT NULL
-            )
-        """)
-        # Tickets table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tickets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                description TEXT NOT NULL,
-                ai_mode TEXT NOT NULL,
-                elapsed_seconds REAL NOT NULL,
-                diagnostic_report TEXT NOT NULL,
-                user_email TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.commit()
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@contextmanager
+Base = declarative_base()
+
 def get_db():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
+    db = SessionLocal()
     try:
-        yield conn
+        yield db
     finally:
-        conn.close()
-
-# Initialize upon import
-init_db()
+        db.close()

@@ -12,6 +12,12 @@ from ai_engine import analyze_ticket_with_ai, triage_with_ai
 from ml_models import predict_root_cause, detect_anomaly, predict_urgency
 from feedback import save_feedback
 from supabase import create_client, Client
+from database import engine, get_db
+import models
+from sqlalchemy.orm import Session
+
+# Create database tables automatically
+models.Base.metadata.create_all(bind=engine)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-key")
 ALGORITHM = "HS256"
@@ -143,6 +149,14 @@ class TriageRequest(BaseModel):
     description: str
     image_base64: Optional[str] = None
 
+class TicketCreate(BaseModel):
+    title: str
+    description: str
+    status: str
+    severity: str
+    tollId: str
+    image_base64: Optional[str] = None
+
 class TriageResponse(BaseModel):
     severity: str
     tags: list
@@ -152,6 +166,47 @@ class TriageResponse(BaseModel):
 async def triage_ticket(req: TriageRequest):
     result = triage_with_ai(req.title, req.description, req.image_base64)
     return result
+
+@app.post("/api/tickets")
+async def create_db_ticket(req: TicketCreate, db: Session = Depends(get_db)):
+    import uuid
+    new_id = f"TKT-{uuid.uuid4().hex[:4].upper()}"
+    triage = triage_with_ai(req.title, req.description, req.image_base64)
+    
+    db_ticket = models.Ticket(
+        id=new_id,
+        title=req.title,
+        description=req.description,
+        status="open",
+        severity=triage.get("severity", req.severity),
+        assigned_to=triage.get("assignedTo", "General SysOps"),
+        toll_id=req.tollId,
+        image_base64=req.image_base64
+    )
+    db.add(db_ticket)
+    db.commit()
+    db.refresh(db_ticket)
+    return db_ticket
+
+@app.get("/api/tickets")
+async def get_all_tickets(db: Session = Depends(get_db)):
+    return db.query(models.Ticket).order_by(models.Ticket.created_at.desc()).all()
+
+@app.put("/api/tickets/{ticket_id}/resolve")
+async def resolve_ticket(ticket_id: str, db: Session = Depends(get_db)):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if ticket:
+        ticket.status = "resolved"
+        db.commit()
+    return {"status": "success"}
+
+@app.put("/api/tickets/{ticket_id}/assign")
+async def assign_ticket(ticket_id: str, assign_req: dict, db: Session = Depends(get_db)):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if ticket:
+        ticket.assigned_to = assign_req.get("user", "Unknown")
+        db.commit()
+    return {"status": "success"}
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_ticket(req: TicketRequest):

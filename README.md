@@ -73,11 +73,24 @@ npm run dev
 
 ## ⚙️ Core Integrations
 
-| Feature | Infrastructure Used |
-|---|---|
-| **Frontend Renderer** | **Next.js 14**, React 18, TailwindCSS |
-| **Backend Endpoints** | **FastAPI**, Uvicorn, Python 3 |
-| **Vector DB / RAG** | **ChromaDB**, LangChain, Groq Inference API |
-| **UI Aesthetics** | **Recharts**, Framer-Motion, Lucide, React-Three-Fiber |
+## 🚀 Tech Stack
+
+### Frontend Architecture
+- **Framework**: [Next.js 14](https://nextjs.org/) with App Router (React 18)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Authentication**: [@auth0/nextjs-auth0](https://auth0.com/) Enterprise SSO
+- **State**: React Context API synchronized with Postgres DB
+- **3D Engine**: [Three.js](https://threejs.org/) via React Three Fiber
+
+### Backend & AI Architecture
+- **API Engine**: [FastAPI](https://fastapi.tiangolo.com/) (Python)
+- **Database**: Native PostgreSQL 15 accessed via SQLAlchemy ORM
+- **LLM Pipeline**: Groq API leveraging `llama-3.1-8b-instant` and `llama-3.2-11b-vision-preview` (Multi-modal)
+- **Vector Search (RAG)**: [ChromaDB](https://www.trychroma.com/) for internal PDF knowledge indexing
+- **Real-Time Telemetry**: Server-Sent Events (SSE) streaming infrastructure
+
+### Deployment & CI/CD
+- **Containerization**: Dual Docker configurations orchestrated via Docker Compose.
+- **Pipelines**: GitHub Actions automated testing and builds.
 
 > "Control Grid provides an authoritative layer over massive highway infrastructure."

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 export interface User {
   email: string;
@@ -97,53 +98,36 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Initialize auth state from localStorage on client
 function getInitialAuthState() {
-  if (typeof window === 'undefined') return { user: null, isAuth: false };
-  
-  const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
-
-  if (token && userStr) {
-    try {
-      const userData = JSON.parse(userStr);
-      return {
-        user: {
-          email: userData.email,
-          name: userData.name || userData.email.split('@')[0],
-          role: userData.role || 'engineer' as const,
-        },
-        isAuth: true,
-      };
-    } catch (e) {
-      console.error('Failed to parse stored user data');
-    }
-  }
-  
-  const storedEmail = localStorage.getItem('user_email');
-  const storedName = localStorage.getItem('user_name');
-  const storedRole = localStorage.getItem('user_role');
-  const authenticated = localStorage.getItem('authenticated');
-
-  if (authenticated === 'true' && storedEmail) {
-    return {
-      user: {
-        email: storedEmail,
-        name: storedName || storedEmail.split('@')[0],
-        role: (storedRole as any) || 'engineer',
-      },
-      isAuth: true,
-    };
-  }
-  
-  return { user: null, isAuth: false };
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const initialAuth = getInitialAuthState();
-  
-  // Authentication State
-  const [user, setUser] = useState<User | null>(initialAuth.user);
-  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth.isAuth);
+  const { user: auth0User, isLoading: auth0Loading } = useUser();
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    if (!auth0Loading) {
+      if (auth0User) {
+        // In a true environment, roles are mapped via Auth0 permissions scope
+        setUser({ email: auth0User.email!, name: auth0User.name || 'User', role: 'admin' });
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+      setIsHydrated(true);
+    }
+  }, [auth0User, auth0Loading]);
+
+  const loadDBTickets = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/tickets');
+      if (res.ok) setTickets(await res.json());
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadDBTickets();
+  }, []);
 
   // System State
   const [backendOnline, setBackendOnline] = useState(false);
@@ -228,67 +212,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [currentTollId]);
 
   const login = (token: string, userData: any) => {
-    setUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('user_name', userData.name);
-    localStorage.setItem('user_role', userData.role || 'engineer');
-    localStorage.setItem('authenticated', 'true');
+    window.location.href = '/api/auth/login';
   };
 
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_name');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('authenticated');
+    window.location.href = '/api/auth/logout';
   };
 
   const createTicket = async (ticket: Omit<TicketData, 'id' | 'createdAt'>) => {
     try {
-      // 1. Dispatch to Triage AI via standard fetch or apiClient
-      const response = await fetch('http://127.0.0.1:8000/api/triage-ticket', {
+  const createTicket = async (ticket: Omit<TicketData, 'id' | 'createdAt'>) => {
+    try {
+      await fetch('http://127.0.0.1:8000/api/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: ticket.title, description: ticket.description, image_base64: ticket.imageBase64 })
+        body: JSON.stringify({
+          title: ticket.title,
+          description: ticket.description,
+          status: ticket.status,
+          severity: ticket.severity,
+          tollId: ticket.tollId,
+          image_base64: ticket.imageBase64
+        })
       });
-      
-      let triageData = { severity: ticket.severity, tags: ['Manual'], assignedTo: 'General SysOps' };
-      if (response.ok) {
-        triageData = await response.json();
-      }
-
-      const newTicket: TicketData = {
-        ...ticket,
-        severity: triageData.severity as any,
-        assignedTo: triageData.assignedTo,
-        id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
-        createdAt: new Date().toISOString() // We could add tags if the TicketData interface supports it
-      };
-      
-      setTickets([newTicket, ...tickets]);
+      loadDBTickets(); // Refresh from DB
     } catch (e) {
-      console.error("Triage Error", e);
-      // Fallback
-      const newTicket: TicketData = {
-        ...ticket,
-        id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
-        createdAt: new Date().toISOString()
-      };
-      setTickets([newTicket, ...tickets]);
+      console.error("DB Ticket Creation Error", e);
     }
   };
 
-  const resolveTicket = (id: string) => {
-    setTickets(tickets.map(t => t.id === id ? { ...t, status: 'resolved' } : t));
+  const resolveTicket = async (id: string) => {
+    await fetch(`http://127.0.0.1:8000/api/tickets/${id}/resolve`, { method: 'PUT' });
+    loadDBTickets();
   };
 
-  const assignTicket = (id: string, assignedTo: string) => {
-    setTickets(tickets.map(t => t.id === id ? { ...t, assignedTo } : t));
+  const assignTicket = async (id: string, assignedTo: string) => {
+    await fetch(`http://127.0.0.1:8000/api/tickets/${id}/assign`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: assignedTo })
+    });
+    loadDBTickets();
   };
 
   const submitFeedback = async (ticketQuery: string, solution: string, wasSuccessful: boolean) => {
