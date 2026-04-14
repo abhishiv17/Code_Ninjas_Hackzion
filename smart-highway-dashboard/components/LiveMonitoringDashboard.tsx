@@ -16,6 +16,8 @@ import {
   getUrgencyConfidence,
 } from '@/lib/liveMonitoringData';
 import { Activity, Radio, Video } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useLanguage } from '@/context/LanguageContext';
 
 const KarnatakaMap = dynamic(
   () => import('@/components/live-monitoring/KarnatakaMap'),
@@ -39,12 +41,12 @@ function UrgencyGauge({ value }: { value: number }) {
   const gradId = 'urgency-ring-grad';
 
   return (
-    <div className="flex h-full min-h-[280px] flex-col justify-between rounded-2xl border border-amber-500/25 bg-gradient-to-b from-amber-950/30 via-slate-900/90 to-slate-950 p-6 shadow-lg shadow-amber-900/10">
+    <div className="flex h-full min-h-[280px] flex-col justify-between rounded-2xl border border-slate-200 bg-white dark:border-amber-500/25 dark:bg-gradient-to-b dark:from-amber-950/30 dark:via-slate-900/90 dark:to-slate-950 p-6 shadow-lg shadow-slate-200 dark:shadow-amber-900/10">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/80">
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-500 dark:text-amber-200/80">
           AI signal
         </p>
-        <h3 className="mt-1 text-lg font-semibold text-white">Urgency confidence</h3>
+        <h3 className="mt-1 text-lg font-semibold text-slate-800 dark:text-white">Urgency confidence</h3>
         <p className="mt-1 text-sm text-slate-400">
           Estimated chance that immediate support is needed for this gate.
         </p>
@@ -87,10 +89,10 @@ function UrgencyGauge({ value }: { value: number }) {
           />
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-bold tabular-nums tracking-tight text-white">
+          <span className="text-4xl font-bold tabular-nums tracking-tight text-slate-800 dark:text-white">
             {value}%
           </span>
-          <span className="mt-1 max-w-[9rem] text-xs leading-snug text-slate-400">
+          <span className="mt-1 max-w-[9rem] text-xs leading-snug text-slate-500 dark:text-slate-400">
             immediate support likelihood
           </span>
         </div>
@@ -105,36 +107,48 @@ function UrgencyGauge({ value }: { value: number }) {
 
 export default function LiveMonitoringDashboard() {
   const [tollId, setTollId] = useState(1);
+  const { t } = useLanguage();
 
   const ticketData = useMemo(() => getTicketFlowSeries(tollId), [tollId]);
   const urgency = useMemo(() => getUrgencyConfidence(tollId), [tollId]);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <motion.div 
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { staggerChildren: 0.15 } }
+      }}
+      className="space-y-6"
+    >
+      <motion.header 
+        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+      >
         <div>
-          <div className="flex items-center gap-2 text-blue-400">
+          <div className="flex items-center gap-2 text-blue-500 dark:text-blue-400">
             <Activity className="h-5 w-5" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-widest">
-              Live monitoring
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-blue-400">
+              {t('nav.monitoring')}
             </span>
           </div>
-          <h1 className="mt-2 text-2xl font-bold text-white md:text-3xl">
-            Toll plaza overview
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white md:text-3xl">
+            {t('dash.overviewTitle')}
           </h1>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
             Isometric layout, ticket flow, and AI urgency for the selected gate.
           </p>
         </div>
 
         <label className="flex w-full flex-col gap-2 sm:w-72">
           <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Toll gate
+            {t('dash.tollGate')}
           </span>
           <select
             value={tollId}
             onChange={(e) => setTollId(Number(e.target.value))}
-            className="rounded-lg border border-slate-600 bg-slate-900 px-4 py-3 text-sm font-medium text-white shadow-inner outline-none ring-blue-500/0 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            className="rounded-lg border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900 px-4 py-3 text-sm font-medium text-slate-800 dark:text-white shadow-inner outline-none ring-blue-500/0 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
             {TOLL_OPTIONS.map((n) => (
               <option key={n} value={n}>
@@ -143,33 +157,39 @@ export default function LiveMonitoringDashboard() {
             ))}
           </select>
         </label>
-      </header>
+      </motion.header>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 shadow-xl backdrop-blur-sm md:p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-800/80 px-2 py-1 text-slate-300">
-            <span className="h-2 w-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
-            Lanes & booth
+      <motion.section 
+        variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}
+        className="rounded-2xl border border-slate-200 bg-white/40 dark:border-slate-800 dark:bg-slate-900/40 p-4 shadow-xl backdrop-blur-sm md:p-5"
+      >
+        <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
+            <span className="h-2 w-2 rounded-full bg-sky-500 dark:bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
+            {t('dash.lanesBooth')}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-800/80 px-2 py-1 text-slate-300">
-            <Video className="h-3.5 w-3.5 text-sky-400" aria-hidden />
-            Cameras
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
+            <Video className="h-3.5 w-3.5 text-sky-500 dark:text-sky-400" aria-hidden />
+            {t('dash.cameras')}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-800/80 px-2 py-1 text-slate-300">
-            <Radio className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
-            RFID nodes
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-slate-800/80 px-2 py-1 text-slate-600 dark:text-slate-300">
+            <Radio className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" aria-hidden />
+            {t('dash.rfidNodes')}
           </span>
           <span className="ml-auto font-mono text-slate-500">Toll {tollId}</span>
         </div>
         <KarnatakaMap selectedTollId={tollId} onTollSelect={setTollId} />
-      </section>
+      </motion.section>
 
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 shadow-xl backdrop-blur-sm lg:col-span-8">
-          <h2 className="text-base font-semibold text-white">
-            Flow of tickets raised
+      <motion.section 
+        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+        className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch"
+      >
+        <div className="rounded-2xl border border-slate-200 bg-white/50 dark:border-slate-800 dark:bg-slate-900/50 p-5 shadow-xl backdrop-blur-sm lg:col-span-8">
+          <h2 className="text-base font-semibold text-slate-800 dark:text-white">
+            {t('dash.flowTickets')}
           </h2>
-          <p className="mt-1 text-sm text-slate-400">Last 12 hours (synthetic, gate-specific).</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('dash.last12Hours')}</p>
           <div className="mt-4 h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={ticketData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -213,7 +233,7 @@ export default function LiveMonitoringDashboard() {
         <div className="lg:col-span-4">
           <UrgencyGauge value={urgency} />
         </div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }

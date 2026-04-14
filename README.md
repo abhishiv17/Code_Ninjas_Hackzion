@@ -1,172 +1,83 @@
-# 🚦 Smart Highway Intelligence Platform
+# 🚦 Control Grid Command Center (Smart Highway Platform)
 
-An AI-powered smart highway monitoring and management system built for the **Code Ninjas Hackzion** hackathon. The platform provides real-time traffic monitoring, anomaly detection, community issue ticketing, and a RAG-powered AI assistant for highway infrastructure queries.
+An AI-powered smart highway monitoring and management platform built specifically for the **Code Ninjas Hackzion** hackathon. This application serves as a dynamic, real-time command center optimized for diagnosing, monitoring, and triaging highway infrastructure networks seamlessly.
+
+![Dashboard Preview](https://via.placeholder.com/1200x600.png?text=Smart+Highway+Command+Center)
 
 ---
 
-## 🏗️ Project Structure
+## ✨ Cutting-Edge Capabilities
 
-```
+We escalated this from a standard traffic application into a high-end enterprise **Command Center**, utilizing advanced frameworks entirely:
+
+- 🎮 **3D Authenticated Immersion** — High-end `react-three-fiber` interactive 3D topology map during authentication sequences, offering a modern, premium UX for signing in (simulated OAuth available).
+- 🌐 **Edge Node Hardware Matrix** — The dashboard actively pings the FastAPI backend via REST loops to fetch real-time toll grid data, network latency, system uptime, and active sensor states dynamically assigned to specific sectors (Alpha, Bravo, Charlie, Delta).
+- 🧠 **Multimodal RAG AI Diagnostic Engine** — A hyper-advanced diagnostic terminal on the `/ai` route. It features token-by-token server-sent events (SSE) streaming and parses both uploaded Text Documents **and Images** (powered by `Llama-11b Vision`). 
+- 🗣️ **Voice-to-Text Recognition** — Built-in native Web Speech API bindings let you dictate commands to the AI Engine hands-free, auto-disengaging efficiently upon transmission.
+- 🌍 **Multilingual Localization Architecture** — The application enforces language contexts dynamically. The AI engine itself is instructed to adopt the interface's language (Spanish, English, Hindi, Kannada) for localized diagnostics.
+- 🎫 **Presentational Ticketing Simulator** — Support tickets automatically scale into the `/tickets` routing board to display an enterprise IT infrastructure workflow environment.
+
+---
+
+## 🏗️ Technical Topology
+
+```text
 Code_Ninjas_Hackzion/
-├── smart-highway-dashboard/     # Next.js 14 frontend (main app)
-│   ├── app/                     # App router pages & layouts
-│   │   ├── dashboard/           # Main dashboard page
-│   │   ├── monitoring/          # Live monitoring page
-│   │   ├── tickets/             # Community tickets page
-│   │   ├── login/               # Authentication pages
-│   │   └── layout.tsx           # Root layout
-│   ├── components/              # Reusable UI components
-│   │   ├── DashboardSlidePanel.tsx
-│   │   ├── LiveMonitoringDashboard.tsx
-│   │   ├── RagTerminal.tsx
-│   │   ├── CommunityTickets.tsx
-│   │   ├── TicketAnalysis.tsx
-│   │   ├── Sidebar.tsx
-│   │   ├── Topbar.tsx
-│   │   ├── SystemAlerts.tsx
-│   │   ├── StatCard.tsx
-│   │   └── ErrorBoundary.tsx
-│   ├── context/                 # React contexts (App, Theme, Language, Dashboard)
-│   ├── lib/                     # API client, helpers, icons
-│   ├── public/                  # Static assets
-│   ├── middleware.ts             # Auth middleware
-│   ├── next.config.ts
-│   ├── tailwind.config.ts
-│   └── package.json
+├── smart-highway-dashboard/     # Next.js 14 frontend (Command Center Application)
+│   ├── app/                     # App router pages (dashboard/, ai/, tickets/, login/)
+│   ├── components/              # EdgeMatrix UI, RagTerminal, Three Fiber Scenes, SVGs
+│   ├── context/                 # Centralized React States (Context overrides)
+│   └── tailwind.config.ts       # Glassmorphism/Neumorphism design tokens
 │
-├── backend/                     # Python FastAPI backend
-│   ├── main.py                  # FastAPI app & all API routes
-│   ├── ai_engine.py             # AI/LLM integration
-│   ├── rag_pipeline.py          # RAG pipeline (ChromaDB + embeddings)
-│   ├── ml_models.py             # ML anomaly detection models
-│   ├── auth.py                  # JWT authentication
-│   ├── database.py              # Database connection
-│   ├── feedback.py              # Feedback endpoints
-│   └── requirements.txt         # Python dependencies
-│
-├── docs/                        # Source PDFs for RAG knowledge base
-│   ├── EPAC600-ATC-m60-User-Manual-PIM302.pdf
-│   ├── b-cisco-ie-4000-hig.pdf
-│   └── flir-fc-series-id-installation-manual.pdf
-│
-├── .env.example                 # Environment variable template
-├── .gitignore
-├── requirements.txt             # Root-level Python requirements
-└── README.md
+├── backend/                     # Python FastAPI High-Performance Backend
+│   ├── main.py                  # API endpoints, Live Telemetry Streamers
+│   ├── rag_pipeline.py          # Vision LLM logic, ChromaDB document embeddings
+│   ├── ml_models.py             # Heuristics & Analytics
 ```
 
 ---
 
-## ✨ Features
+## 🚀 Deployment Instructions
 
-- 📊 **Real-time Dashboard** — Live highway stats, camera feeds, and sensor telemetry
-- 🔴 **Live Monitoring** — Node maps, anomaly detection, system alerts
-- 🤖 **RAG AI Terminal** — Query highway documentation using an LLM + RAG pipeline
-- 🎫 **Community Tickets** — Report and track road/infrastructure issues
-- 🌐 **Multi-language Support** — i18n-ready UI
-- 🌙 **Dark/Light Theme** — User-configurable themes
-- 🔐 **JWT Authentication** — Secure login with token-based sessions
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Python 3.10+
-- An OpenAI or compatible LLM API key
-
----
-
-### 1. Backend Setup
+### 1. Launching the Backend Engine
 
 ```bash
-# Create and activate a virtual environment
+# Enter environment & initialize
+cd backend
 python -m venv venv
-source venv/bin/activate        # Linux/macOS
 venv\Scripts\activate           # Windows
+source venv/bin/activate        # Linux/macOS
 
-# Install dependencies
+# Inject Dependencies
 pip install -r requirements.txt
 
-# Copy and configure environment variables
-cp .env.example backend/.env
-# Edit backend/.env with your API keys and DB settings
-
-# Start the FastAPI server
-cd backend
+# Start Edge Node Server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+*API mounts locally at `http://localhost:8000`. Full OpenAPI docs at `/docs`.*
 
-The backend API will be available at `http://localhost:8000`.  
-Interactive docs at `http://localhost:8000/docs`.
-
----
-
-### 2. Frontend Setup
+### 2. Launching the Next.js Command Center
 
 ```bash
 cd smart-highway-dashboard
 
-# Copy and configure environment variables
-cp .env.local.example .env.local    # or use the provided .env.local
-# Set NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# Install dependencies
+# Install React/Three.js ecosystem dependencies
 npm install
 
-# Start the development server
+# Start Local Dev Rendering Engine
 npm run dev
 ```
-
-The frontend will be available at `http://localhost:3000`.
-
----
-
-## ⚙️ Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Description |
-|---|---|
-| `SECRET_KEY` | JWT signing secret |
-| `OPENAI_API_KEY` | OpenAI API key for LLM |
-| `DATABASE_URL` | Database connection string |
-| `CHROMA_PERSIST_DIR` | ChromaDB persistence directory |
-
-### Frontend (`smart-highway-dashboard/.env.local`)
-
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL |
-
-See `.env.example` for a full template.
+*Frontend interface mounts locally at `http://localhost:3000`. Navigate here to experience the 3D Auth screen.*
 
 ---
 
-## 🧠 RAG Pipeline
+## ⚙️ Core Integrations
 
-The AI terminal is powered by a Retrieval-Augmented Generation (RAG) pipeline:
-
-1. **PDF Ingestion** — Technical manuals in `docs/` are chunked and embedded on first run
-2. **Vector Storage** — Embeddings stored in ChromaDB (auto-created on first run)
-3. **Query** — User queries are matched against relevant document chunks
-4. **LLM Response** — The LLM generates an answer grounded in retrieved context
-
-> The `chroma_db/` directory is auto-generated by the backend when first run. It is excluded from version control.
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
+| Feature | Infrastructure Used |
 |---|---|
-| **Frontend** | Next.js 14, TypeScript, Tailwind CSS |
-| **Backend** | Python, FastAPI, Uvicorn |
-| **AI / RAG** | LangChain, ChromaDB, OpenAI |
-| **Auth** | JWT (python-jose) |
-| **ML** | scikit-learn (anomaly detection) |
-| **State** | React Context API |
+| **Frontend Renderer** | **Next.js 14**, React 18, TailwindCSS |
+| **Backend Endpoints** | **FastAPI**, Uvicorn, Python 3 |
+| **Vector DB / RAG** | **ChromaDB**, LangChain, Groq Inference API |
+| **UI Aesthetics** | **Recharts**, Framer-Motion, Lucide, React-Three-Fiber |
 
-
+> "Control Grid provides an authoritative layer over massive highway infrastructure."

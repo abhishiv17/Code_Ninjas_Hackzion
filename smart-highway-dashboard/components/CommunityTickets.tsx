@@ -4,6 +4,7 @@ import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { MessageSquare, ThumbsUp, ThumbsDown, Send, Users, PlusCircle } from 'lucide-react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CommunityTickets() {
   const { communityTickets, rateCommunityTicket, commentCommunityTicket, createCommunityTicket } = useApp();
@@ -82,8 +83,25 @@ export default function CommunityTickets() {
           </div>
         )}
 
+        <motion.div 
+          initial="hidden" 
+          animate="show" 
+          variants={{
+            hidden: { opacity: 0 },
+            show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
+          className="space-y-4"
+        >
+        <AnimatePresence>
         {communityTickets.map((ticket) => (
-          <div key={ticket.id} className="rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 p-4">
+          <motion.div 
+            key={ticket.id} 
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="rounded-lg border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/30 p-4"
+          >
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-semibold text-slate-800 dark:text-slate-200">{ticket.issue}</h3>
               <span className="text-xs text-slate-400">{ticket.time}</span>
@@ -143,8 +161,10 @@ export default function CommunityTickets() {
                 <Send size={12} />
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
+        </AnimatePresence>
+        </motion.div>
         {communityTickets.length === 0 && (
           <p className="text-sm text-slate-400 italic text-center mt-8">No community verified tickets yet.</p>
         )}

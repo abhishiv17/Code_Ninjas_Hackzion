@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Loader, ThumbsUp, ThumbsDown, Mic, MicOff } from 'lucide-react';
-import { solveTicket } from '@/lib/api';
+import { Bot, Send, Loader, ThumbsUp, ThumbsDown, Mic, MicOff, Paperclip, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { useDashboard } from '@/context/DashboardContext';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -18,7 +17,7 @@ interface Message {
 export default function RagTerminal() {
   const { ragTerminalQuery, setRagTerminalQuery } = useDashboard();
   const { submitFeedback } = useApp();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -31,8 +30,10 @@ export default function RagTerminal() {
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<Map<string, boolean>>(new Map());
   const [isListening, setIsListening] = useState(false);
+  const [attachments, setAttachments] = useState<{ type: 'image' | 'document'; data: string; name: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -79,7 +80,9 @@ export default function RagTerminal() {
 
         recognitionRef.current.onend = () => {
           setIsListening((current) => {
-            if (current) recognitionRef.current.start(); // keep listening until manually stopped
+            if (current) {
+              try { recognitionRef.current.start(); } catch (e) {}
+            }
             return current;
           });
         };
@@ -97,54 +100,129 @@ export default function RagTerminal() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!ragTerminalQuery.trim()) return;
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const result = ev.target?.result as string;
+        if (file.type.startsWith('image/')) {
+          setAttachments(prev => [...prev, { type: 'image', data: result, name: file.name }]);
+        } else {
+          // Document text
+          setAttachments(prev => [...prev, { type: 'document', data: result, name: file.name }]);
+        }
+      };
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
+      }
+    });
+    // Clear input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
-    // Add user message
+  const removeAttachment = (idx: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSendMessage = async () => {
+    if (!ragTerminalQuery.trim() && attachments.length === 0) return;
+
+    let finalQuery = ragTerminalQuery;
+    
+    // Process Document attachments into the prompt
+    const docAttachments = attachments.filter(a => a.type === 'document');
+    if (docAttachments.length > 0) {
+      finalQuery += '\n\n[Attached Documents for Context]:\n' + docAttachments.map(d => `--- ${d.name} ---\n${d.data}\n`).join('\n');
+    }
+
+    // Process Image attachments
+    const imgAttachments = attachments.filter(a => a.type === 'image');
+    const imageBase64 = imgAttachments.length > 0 ? imgAttachments[0].data : undefined;
+
+    // Add user message to UI
+    const displayContent = ragTerminalQuery + (attachments.length > 0 ? `\n[Attached: ${attachments.map(a => a.name).join(', ')}]` : '');
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: ragTerminalQuery,
+      content: displayContent,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setRagTerminalQuery('');
+    setAttachments([]);
     setIsLoading(true);
+    
+    // Automatically turn off microphone
+    if (isListening) {
+      setIsListening(false);
+      try { if (recognitionRef.current) recognitionRef.current.stop(); } catch(e) {}
+    }
+
+    const assistantMessageId = (Date.now() + 1).toString();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      },
+    ]);
 
     try {
-      // Call backend API
-      const response = await solveTicket(ragTerminalQuery);
+      const history = messages
+        .filter((m) => m.id !== '0' && m.role !== 'assistant' || (m.role === 'assistant' && !!m.content && m.id !== '0'))
+        .slice(-6) 
+        .map((m) => ({ role: m.role, content: m.content }));
 
-      let assistantMessage: Message;
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${API_BASE_URL}/api/diagnostics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          query: finalQuery, 
+          history, 
+          language: language || 'en',
+          ...(imageBase64 && { image_base64: imageBase64 })
+        }),
+      });
 
-      if (response.status === 'success') {
-        assistantMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: response.response,
-          timestamp: new Date(),
-        };
-      } else {
-        assistantMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `Error: ${response.error || 'Failed to process request'}`,
-          timestamp: new Date(),
-          error: true,
-        };
+      if (!response.ok) {
+        throw new Error('Failed to connect to the diagnostic engine');
       }
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        let done = false;
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true });
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId
+                  ? { ...m, content: m.content + chunk }
+                  : m
+              )
+            );
+          }
+        }
+      }
     } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Connection error: Unable to reach the backend service.`,
-        timestamp: new Date(),
-        error: true,
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMessageId
+            ? { ...m, content: 'Connection error: Unable to reach the backend service.', error: true }
+            : m
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -153,11 +231,11 @@ export default function RagTerminal() {
   const toggleListening = () => {
     if (!recognitionRef.current) return;
     if (isListening) {
-      recognitionRef.current.stop();
       setIsListening(false);
+      try { recognitionRef.current.stop(); } catch (e) {}
     } else {
-      recognitionRef.current.start();
       setIsListening(true);
+      try { recognitionRef.current.start(); } catch (e) { console.warn(e); }
     }
   };
 
@@ -268,45 +346,76 @@ export default function RagTerminal() {
             </div>
           );
         })}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="flex items-center space-x-2 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
-              <Loader size={16} className="animate-spin" />
-              <span>Processing query...</span>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="flex space-x-2">
-        <button
-          onClick={toggleListening}
-          className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
-            isListening 
-              ? 'bg-red-500 text-white animate-pulse' 
-              : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
-          }`}
-          title="Voice Input"
-        >
-          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-        </button>
-        <input
-          type="text"
-          placeholder={t('rag.placeholder')}
-          value={ragTerminalQuery}
-          onChange={(e) => setRagTerminalQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-          disabled={isLoading}
-          className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500"
-        />
-        <button
-          onClick={handleSendMessage}
-          disabled={isLoading || !ragTerminalQuery.trim()}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-colors flex items-center justify-center"
-        >
-          {isLoading ? <Loader size={18} className="animate-spin" /> : <Send size={18} />}
-        </button>
+      <div className="flex flex-col space-y-2">
+        {/* Attachment preview area */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-1">
+            {attachments.map((att, idx) => (
+              <div key={idx} className="relative flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 pr-8 dark:border-slate-700 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                {att.type === 'image' ? (
+                  // Use img instead of next/image since it's a blob/base64
+                  <img src={att.data} alt="preview" className="h-8 w-8 rounded object-cover" />
+                ) : (
+                  <FileText size={16} className="text-blue-500" />
+                )}
+                <span className="max-w-[120px] truncate">{att.name}</span>
+                <button onClick={() => removeAttachment(idx)} className="absolute right-1 top-1 p-1 text-slate-400 hover:text-red-500 rounded bg-white/50 dark:bg-black/50">
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex space-x-2">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileSelect} 
+            className="hidden" 
+            multiple 
+            accept="image/*,.txt,.md,.csv" 
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 rounded-lg flex items-center justify-center transition-colors bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+            title="Attach file (Image or Document)"
+          >
+            <Paperclip size={18} />
+          </button>
+          
+          <button
+            onClick={toggleListening}
+            className={`p-3 rounded-lg flex items-center justify-center transition-colors ${
+              isListening 
+                ? 'bg-red-500 text-white animate-pulse' 
+                : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+            }`}
+            title="Voice Input"
+          >
+            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
+          
+          <input
+            type="text"
+            placeholder={t('rag.placeholder')}
+            value={ragTerminalQuery}
+            onChange={(e) => setRagTerminalQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading}
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:border-blue-500 focus:outline-none disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder-slate-500"
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={isLoading || (!ragTerminalQuery.trim() && attachments.length === 0)}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-colors flex items-center justify-center"
+          >
+            {isLoading ? <Loader size={18} className="animate-spin" /> : <Send size={18} />}
+          </button>
+        </div>
       </div>
     </div>
   );

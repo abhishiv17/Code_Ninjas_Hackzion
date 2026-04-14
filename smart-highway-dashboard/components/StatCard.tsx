@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Loader } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface StatCardProps {
   title: string;
@@ -36,7 +37,11 @@ export default function StatCard({
   };
 
   return (
-    <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 transition-colors hover:border-slate-300 dark:border-slate-700/50 dark:bg-slate-800/50 dark:hover:border-slate-600/50">
+    <motion.div 
+      whileHover={{ scale: 1.02, translateY: -4 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 transition-colors hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/10 dark:border-slate-700/50 dark:bg-[var(--color-dark-panel)]/80 backdrop-blur-sm dark:hover:border-blue-500/50"
+    >
       <div className="mb-4 flex items-start justify-between text-slate-500 dark:text-slate-400">
         <span className="text-sm font-medium">{title}</span>
         {loading ? (
@@ -58,6 +63,6 @@ export default function StatCard({
           value || 'N/A'
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

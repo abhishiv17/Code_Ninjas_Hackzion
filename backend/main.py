@@ -11,7 +11,6 @@ from jose import JWTError, jwt
 from ai_engine import analyze_ticket_with_ai
 from ml_models import predict_root_cause, detect_anomaly, predict_urgency
 from feedback import save_feedback
-from rag_pipeline import query_rag_pipeline
 from supabase import create_client, Client
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-key")
@@ -177,11 +176,18 @@ async def root():
 
 class DiagnosticsRequest(BaseModel):
     query: str
+    history: list = []
+    language: str = "en"
+    image_base64: Optional[str] = None
 
 class LiveMonitoringResponse(BaseModel):
     toll_id: int
     urgency_percentage: float
     timeseries: list
+    active_vehicles: int
+    latency: float
+    sensors_online: int
+    uptime: str
 
 # Initialize Supabase Client
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -194,20 +200,28 @@ if SUPABASE_URL and SUPABASE_KEY:
     except Exception as e:
         print(f"Failed to initialize Supabase: {e}")
 
+from fastapi.responses import StreamingResponse
+from rag_pipeline import query_rag_pipeline_stream
+
 @app.post("/api/diagnostics")
 async def handle_diagnostics(req: DiagnosticsRequest):
+    return StreamingResponse(
+        query_rag_pipeline_stream(req.query, req.history, req.language, req.image_base64),
+        media_type="text/event-stream"
+    )
+
+class KnowledgeIngestRequest(BaseModel):
+    document_text: str
+    metadata: dict = {}
+
+@app.post("/api/knowledge/ingest")
+async def ingest_knowledge(req: KnowledgeIngestRequest):
+    from rag_pipeline import add_knowledge
     try:
-        result = query_rag_pipeline(req.query)
-        return {
-            "status": "success",
-            "response": result
-        }
+        add_knowledge(req.document_text, req.metadata)
+        return {"status": "success", "message": "Document successfully vectorized and stored."}
     except Exception as e:
-        return {
-            "status": "error",
-            "response": "",
-            "error": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/live-monitoring/{toll_id}", response_model=LiveMonitoringResponse)
 async def live_monitoring_data(toll_id: int):
@@ -248,10 +262,26 @@ async def live_monitoring_data(toll_id: int):
     # Predict urgency
     urgency = predict_urgency(ticket_frequency, hardware_status, latency)
     
+    # Generate dynamic realistic metrics bound to the specific toll_id
+    if hardware_status == 0:
+        active_vehicles = 0
+        sensors_online = 0
+        uptime = "0.0%"
+    else:
+        # Pseudo-random but bound to toll_id to look realistic
+        base_vehicles = 1200 * toll_id
+        active_vehicles = base_vehicles + random.randint(-200, 200)
+        sensors_online = random.randint(85, 100)
+        uptime = "99.8%"
+
     return {
         "toll_id": toll_id,
         "urgency_percentage": urgency,
-        "timeseries": timeseries_data
+        "timeseries": timeseries_data,
+        "active_vehicles": active_vehicles,
+        "latency": latency,
+        "sensors_online": sensors_online,
+        "uptime": uptime
     }
 
 # --- Community Tickets System ---

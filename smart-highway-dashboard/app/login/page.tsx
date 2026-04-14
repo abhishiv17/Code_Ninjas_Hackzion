@@ -5,8 +5,14 @@ import { useRouter } from 'next/navigation';
 import { IconMail, IconLock, IconUser, IconEye, IconArrowLeft, IconSun, IconMoon, IconCheck, IconX } from '@/lib/icons';
 import { calcPasswordStrength, validateEmail, STRENGTH_LABELS, getStrengthColor } from '@/lib/auth-helpers';
 import { useTheme } from '@/context/ThemeContext';
+import { useApp } from '@/context/AppContext';
+import dynamic from 'next/dynamic';
 
-type View = 'signin' | 'signup' | 'forgot';
+const Login3DBackground = dynamic(() => import('@/components/Login3DBackground'), {
+  ssr: false,
+});
+
+type View = 'signin' | 'signup' | 'forgot' | 'verify_email';
 type ToastT = { msg: string; type: 'success' | 'error' } | null;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
@@ -35,7 +41,7 @@ function StrengthMeter({ password }: { password: string }) {
   );
 }
 
-function SignInView({ onForgot, showToast, router }: { onForgot: () => void; showToast: (msg: string, type: 'success' | 'error') => void; router: any }) {
+function SignInView({ onForgot, showToast, router, onLogin }: { onForgot: () => void; showToast: (msg: string, type: 'success' | 'error') => void; router: any; onLogin: (token: string, user: any) => void }) {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -59,8 +65,7 @@ function SignInView({ onForgot, showToast, router }: { onForgot: () => void; sho
       });
       if (res.ok) {
         const data = await res.json();
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        onLogin(data.access_token, data.user);
         showToast('Signed in! Redirecting…', 'success');
         setTimeout(() => router.push('/dashboard'), 1000);
       } else {
@@ -103,14 +108,35 @@ function SignInView({ onForgot, showToast, router }: { onForgot: () => void; sho
         </div>
       </div>
 
-      <button onClick={handleSubmit} disabled={loading} className={`w-full py-2.5 rounded-lg font-medium transition ${loading ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+      <div className="my-4 flex items-center justify-between before:border-t before:flex-1 before:border-slate-700 after:border-t after:flex-1 after:border-slate-700">
+        <span className="px-2 text-xs text-slate-500 uppercase">Or continue with</span>
+      </div>
+
+      <button 
+        onClick={() => {
+          showToast('Google OAuth simulated successfully. Redirecting...', 'success');
+          onLogin('google-token', { email: 'demo@google.com', name: 'Google User', role: 'engineer' });
+          setTimeout(() => router.push('/dashboard'), 1000);
+        }} 
+        className={`w-full flex items-center justify-center gap-3 py-2.5 rounded-lg font-medium transition bg-white text-slate-800 hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700`}
+      >
+        <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Google
+      </button>
+
+      <button onClick={handleSubmit} disabled={loading} className={`w-full py-2.5 rounded-lg mt-4 font-medium transition ${loading ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/30'}`}>
         {loading ? 'Signing in…' : 'Sign In →'}
       </button>
     </div>
   );
 }
 
-function SignUpView({ showToast, router }: { showToast: (msg: string, type: 'success' | 'error') => void; router: any }) {
+function SignUpView({ showToast, router, onLogin, onSignUpSuccess }: { showToast: (msg: string, type: 'success' | 'error') => void; router: any; onLogin: (token: string, user: any) => void; onSignUpSuccess: () => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -139,10 +165,9 @@ function SignUpView({ showToast, router }: { showToast: (msg: string, type: 'suc
       });
       if (res.ok) {
         const data = await res.json();
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        showToast('Account created! Redirecting…', 'success');
-        setTimeout(() => router.push('/dashboard'), 1000);
+        // Strict Validation Rule simulated: Don't automatically log them in! Ask them to verify email.
+        showToast('Account built securely. Verification email triggered.', 'success');
+        onSignUpSuccess(); 
       } else {
         const data = await res.json();
         showToast(data.detail || 'Signup failed', 'error');
@@ -189,7 +214,28 @@ function SignUpView({ showToast, router }: { showToast: (msg: string, type: 'suc
         <StrengthMeter password={pass} />
       </div>
 
-      <button onClick={handleSubmit} disabled={loading} className={`w-full py-2.5 rounded-lg font-medium transition ${loading ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+      <div className="my-4 flex items-center justify-between before:border-t before:flex-1 before:border-slate-700 after:border-t after:flex-1 after:border-slate-700">
+        <span className="px-2 text-xs text-slate-500 uppercase">Or continue with</span>
+      </div>
+
+      <button 
+        onClick={() => {
+          showToast('Google OAuth simulated successfully. Redirecting...', 'success');
+          onLogin('google-token', { email: 'demo@google.com', name: 'Google User', role: 'engineer' });
+          setTimeout(() => router.push('/dashboard'), 1000);
+        }} 
+        className={`w-full flex items-center justify-center gap-3 py-2.5 rounded-lg font-medium transition bg-white text-slate-800 hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700`}
+      >
+        <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Google
+      </button>
+
+      <button onClick={handleSubmit} disabled={loading} className={`w-full py-2.5 rounded-lg mt-4 font-medium transition ${loading ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/30'}`}>
         {loading ? 'Creating account…' : 'Create Account →'}
       </button>
     </div>
@@ -253,6 +299,7 @@ function ForgotView({ onBack, showToast }: { onBack: () => void; showToast: (msg
 
 export default function AuthPage() {
   const router = useRouter();
+  const { login } = useApp();
   const { theme, toggleTheme } = useTheme();
   const [tab, setTab] = useState<'signin' | 'signup'>('signin');
   const [view, setView] = useState<View>('signin');
@@ -273,11 +320,7 @@ export default function AuthPage() {
 
   return (
     <main className={`min-h-screen bg-gradient-to-br ${theme === 'dark' ? 'from-slate-950 via-slate-900 to-slate-950' : 'from-slate-50 via-white to-slate-100'} flex items-center justify-center p-4 relative overflow-hidden`}>
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
+      <Login3DBackground isDark={theme === 'dark'} />
 
       {/* Theme Toggle */}
       <button
@@ -288,10 +331,9 @@ export default function AuthPage() {
         {theme === 'dark' ? <IconSun /> : <IconMoon />}
       </button>
 
-      {/* Card */}
-      <div className={`w-full max-w-md relative z-10 ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-white/50 border-slate-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-2xl`}>
-        {view !== 'forgot' && (
-          <div className="flex gap-2 mb-6 border-b border-slate-700">
+      <div className={`w-full max-w-md relative z-10 ${theme === 'dark' ? 'bg-slate-900/60 border-slate-800' : 'bg-white/80 border-slate-200'} backdrop-blur-2xl border rounded-2xl p-8 shadow-2xl`}>
+        {view !== 'forgot' && view !== 'verify_email' && (
+          <div className="flex gap-2 mb-6 border-b border-slate-700/50">
             <button onClick={() => switchTab('signin')} className={`px-4 py-2 font-medium border-b-2 transition ${tab === 'signin' ? 'text-blue-400 border-blue-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}>
               Sign In
             </button>
@@ -303,11 +345,28 @@ export default function AuthPage() {
 
         <Toast toast={toast} />
 
-        {view === 'signin' && <SignInView onForgot={() => setView('forgot')} showToast={showToast} router={router} />}
-        {view === 'signup' && <SignUpView showToast={showToast} router={router} />}
+        {view === 'signin' && <SignInView onForgot={() => setView('forgot')} showToast={showToast} router={router} onLogin={login} />}
+        {view === 'signup' && <SignUpView showToast={showToast} router={router} onLogin={login} onSignUpSuccess={() => setView('verify_email')} />}
         {view === 'forgot' && <ForgotView onBack={() => { setView('signin'); setToast(null); }} showToast={showToast} />}
+        {view === 'verify_email' && (
+          <div className="space-y-6 text-center py-6">
+            <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <IconMail className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Verify your inbox</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              We've sent a magic link to your email. Click it to verify your account securely and finish authentication.
+            </p>
+            <button
+              onClick={() => setView('signin')}
+              className="mt-6 text-blue-500 hover:text-blue-400 font-medium transition"
+            >
+              ← Back to Sign In
+            </button>
+          </div>
+        )}
 
-        {view !== 'forgot' && (
+        {view !== 'forgot' && view !== 'verify_email' && (
           <p className={`text-center text-sm mt-6 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
             {view === 'signin' ? (
               <>

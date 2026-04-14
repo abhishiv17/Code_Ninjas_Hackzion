@@ -22,7 +22,7 @@ export default function MonitoringPage() {
   }
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-[#0f172a]">
+    <div className="flex h-[100dvh] overflow-hidden bg-slate-50 dark:bg-[#0f172a]">
       <Sidebar />
       <main className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
         <Topbar />

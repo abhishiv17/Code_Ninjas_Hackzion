@@ -47,9 +47,8 @@ export interface CommunityTicketData {
 export interface AppContextType {
   // Authentication
   user: User | null;
-  isAuthenticated: boolean;
   isHydrated: boolean;
-  login: (email: string) => void;
+  login: (token: string, user: any) => void;
   logout: () => void;
 
   // System State
@@ -60,6 +59,8 @@ export interface AppContextType {
     latency: number;
     sensorsOnline: number;
   };
+  currentTollId: number;
+  setCurrentTollId: (id: number) => void;
 
   // Alerts & Tickets
   alerts: SystemAlert[];
@@ -140,17 +141,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // System State
   const [backendOnline, setBackendOnline] = useState(false);
+  const [currentTollId, setCurrentTollId] = useState(1);
   const [systemHealth, setSystemHealth] = useState({
-    uptime: '99.8%',
-    activeVehicles: 12405,
-    latency: 42,
-    sensorsOnline: 98,
+    uptime: '--',
+    activeVehicles: 0,
+    latency: 0,
+    sensorsOnline: 0,
   });
 
   // Alerts & Tickets
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SystemAlert | null>(null);
-  const [tickets, setTickets] = useState<TicketData[]>([]);
+  const [tickets, setTickets] = useState<TicketData[]>([
+    {
+      id: "TKT-8902",
+      title: "RFID Boom Barrier Malfunction at Sector Alpha",
+      description: "Toll Gate 3 boom barrier is failing to raise upon successful RFID fast-tag scan. Vehicles are queuing up. Manual override required.",
+      status: "open",
+      severity: "critical",
+      createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
+      assignedTo: "Hardware Response Team"
+    },
+    {
+      id: "TKT-8901",
+      title: "ANPR Camera Offline (Network Timeout)",
+      description: "Automatic Number Plate Recognition camera #42 lost connection to the main grid. Ping timeouts occurring. Suspect POE switch failure.",
+      status: "in_progress",
+      severity: "warning",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+      assignedTo: "Network Eng - John Doe"
+    },
+    {
+      id: "TKT-8890",
+      title: "Database Latency Spikes during Peak Load",
+      description: "Redis caching layer experienced 500ms latency spikes between 08:00 and 09:00 AM. Scaling policies did not trigger.",
+      status: "resolved",
+      severity: "warning",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+      assignedTo: "SysAdmin - DevOps"
+    },
+    {
+      id: "TKT-8885",
+      title: "Scheduled Maintenance: Edge Server Firmware Update",
+      description: "Applying v2.1.4 patch to toll booth edge processing units. System will experience degraded ML anomaly detection during the 15m window.",
+      status: "closed",
+      severity: "info",
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+      assignedTo: "System Update Agent"
+    }
+  ]);
   const [ragTerminalQuery, setRagTerminalQuery] = useState('');
 
   // Community Tickets
@@ -171,28 +210,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsHydrated(true);
   }, []);
 
-  // Check Backend Health
+  // Check Backend Health & Fetch Specific Toll Stats
   useEffect(() => {
-    const checkHealth = async () => {
+    const fetchTollData = async () => {
       try {
-        await apiClient.healthCheck();
-        setBackendOnline(true);
+        const response = await fetch(`http://127.0.0.1:8000/api/live-monitoring/${currentTollId}`);
+        if(response.ok) {
+           const data = await response.json();
+           setBackendOnline(true);
+           setSystemHealth({
+             uptime: data.uptime,
+             activeVehicles: data.active_vehicles,
+             latency: Math.round(data.latency),
+             sensorsOnline: data.sensors_online
+           });
+        } else {
+           setBackendOnline(false);
+        }
       } catch {
         setBackendOnline(false);
+        setSystemHealth({ uptime: 'Offline', activeVehicles: 0, latency: 0, sensorsOnline: 0 });
       }
     };
 
-    checkHealth();
-    const interval = setInterval(checkHealth, 30000); // Check every 30 seconds
+    fetchTollData();
+    const interval = setInterval(fetchTollData, 10000); // Check every 10 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [currentTollId]);
 
-  const login = (email: string) => {
-    const name = email.split('@')[0];
-    const userData = { email, name, role: 'engineer' as const };
-    setUser(userData);
+  const login = (token: string, userData: any) => {
+    const name = userData.name || userData.email.split('@')[0];
+    const userRole = userData.role || 'engineer';
+    
+    setUser({ email: userData.email, name, role: userRole });
     setIsAuthenticated(true);
-    localStorage.setItem('user_email', email);
+    
+    // Store both new and old auth styles to be safe
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user_email', userData.email);
     localStorage.setItem('user_name', name);
     localStorage.setItem('authenticated', 'true');
   };
@@ -313,6 +369,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         slidePanelOpen,
         setSlidePanelOpen,
         rehydrateAuthFromStorage,
+        currentTollId,
+        setCurrentTollId,
       }}
     >
       {children}

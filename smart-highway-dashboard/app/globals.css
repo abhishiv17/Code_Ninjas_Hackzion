@@ -2,10 +2,41 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-primary: #38bdf8;
+  --color-primary-dark: #0284c7;
+  --color-accent: #fbbf24;
+  --color-dark-bg: #09090b;
+  --color-dark-panel: #18181b;
+  --color-dark-border: #27272a;
+}
+
 body {
-  @apply bg-slate-50 text-slate-900 antialiased transition-colors duration-200;
+  @apply bg-slate-50 text-slate-900 antialiased transition-colors duration-300;
+  background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.05) 0%, transparent 40%);
 }
 
 .dark body {
-  @apply bg-[#0f172a] text-slate-50;
+  @apply bg-[var(--color-dark-bg)] text-slate-50;
+  background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+                    radial-gradient(circle at bottom left, rgba(234, 88, 12, 0.05) 0%, transparent 40%);
+}
+
+.glass-panel {
+  @apply bg-white/70 dark:bg-[var(--color-dark-panel)]/80 backdrop-blur-md border border-slate-200 dark:border-[var(--color-dark-border)] shadow-xl;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-600;
 }
