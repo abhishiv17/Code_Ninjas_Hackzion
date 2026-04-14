@@ -35,6 +35,11 @@ MANIFEST
 .env.*
 !.env.example
 !.env.local.example
+backend/.env
+backend/.env.*
+smart-highway-dashboard/.env.local
+smart-highway-dashboard/.env.*
+!smart-highway-dashboard/.env.local.example
 
 # Backend-specific secrets & generated artifacts
 backend/.env
@@ -75,6 +80,8 @@ chroma_db/
 chromadb/
 *.sqlite3
 *.db
+smarthighway.db
+backend/smarthighway.db
 .cache/
 
 # Logs
