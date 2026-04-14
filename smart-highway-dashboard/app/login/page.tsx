@@ -10,7 +10,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">ControlGrid Access</h1>
         <p className="text-slate-500 dark:text-slate-400 text-center text-sm mb-8">Secure enterprise SSO portal. Authenticate to access the Live System Dashboard.</p>
         
-        <a href="/api/auth/login" className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium text-center hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+        <a href="/auth/login" className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium text-center hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
           Login with SSO
         </a>
       </div>

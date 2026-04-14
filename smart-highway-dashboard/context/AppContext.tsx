@@ -96,8 +96,6 @@ export interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Initialize auth state from localStorage on client
-function getInitialAuthState() {
 export function AppProvider({ children }: { children: ReactNode }) {
   const { user: auth0User, isLoading: auth0Loading } = useUser();
   const [user, setUser] = useState<User | null>(null);
@@ -212,15 +210,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [currentTollId]);
 
   const login = (token: string, userData: any) => {
-    window.location.href = '/api/auth/login';
+    window.location.href = '/auth/login';
   };
 
   const logout = () => {
-    window.location.href = '/api/auth/logout';
+    window.location.href = '/auth/logout';
   };
 
-  const createTicket = async (ticket: Omit<TicketData, 'id' | 'createdAt'>) => {
-    try {
   const createTicket = async (ticket: Omit<TicketData, 'id' | 'createdAt'>) => {
     try {
       await fetch('http://127.0.0.1:8000/api/tickets', {

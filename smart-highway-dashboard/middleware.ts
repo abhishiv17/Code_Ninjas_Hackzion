@@ -1,32 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { auth0 } from './lib/auth0';
 
-export function middleware(request: NextRequest) {
-  // Get pathname from the request
-  const pathname = request.nextUrl.pathname;
-
-  // Public pages that don't require authentication
-  const publicPages = ['/login', '/api'];
-  const isPublicPage = publicPages.some((page) => pathname.startsWith(page));
-
-  if (isPublicPage) {
-    return NextResponse.next();
-  }
-
-  // Check if user is authenticated (this is client-side check, for server-side use cookies/sessions)
-  // For now, we'll rely on client-side authentication
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return await auth0.middleware(request);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };
