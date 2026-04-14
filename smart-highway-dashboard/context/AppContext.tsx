@@ -23,10 +23,11 @@ export interface TicketData {
   title: string;
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  severity: 'critical' | 'warning' | 'info';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   createdAt: string;
-  updatedAt?: string;
+  tollId: string;
   assignedTo?: string;
+  imageBase64?: string;
 }
 
 export interface CommunityComment {
@@ -58,6 +59,7 @@ export interface AppContextType {
     activeVehicles: number;
     latency: number;
     sensorsOnline: number;
+    urgencyPercentage: number;
   };
   currentTollId: number;
   setCurrentTollId: (id: number) => void;
@@ -67,6 +69,9 @@ export interface AppContextType {
   selectedAlert: SystemAlert | null;
   setSelectedAlert: (alert: SystemAlert | null) => void;
   tickets: TicketData[];
+  createTicket: (ticket: Omit<TicketData, 'id' | 'createdAt'>) => void;
+  resolveTicket: (id: string) => void;
+  assignTicket: (id: string, user: string) => void;
   ragTerminalQuery: string;
   setRagTerminalQuery: (query: string) => void;
 
@@ -115,6 +120,7 @@ function getInitialAuthState() {
   
   const storedEmail = localStorage.getItem('user_email');
   const storedName = localStorage.getItem('user_name');
+  const storedRole = localStorage.getItem('user_role');
   const authenticated = localStorage.getItem('authenticated');
 
   if (authenticated === 'true' && storedEmail) {
@@ -122,7 +128,7 @@ function getInitialAuthState() {
       user: {
         email: storedEmail,
         name: storedName || storedEmail.split('@')[0],
-        role: 'engineer' as const,
+        role: (storedRole as any) || 'engineer',
       },
       isAuth: true,
     };
@@ -147,49 +153,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     activeVehicles: 0,
     latency: 0,
     sensorsOnline: 0,
+    urgencyPercentage: 0,
   });
 
   // Alerts & Tickets
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SystemAlert | null>(null);
-  const [tickets, setTickets] = useState<TicketData[]>([
-    {
-      id: "TKT-8902",
-      title: "RFID Boom Barrier Malfunction at Sector Alpha",
-      description: "Toll Gate 3 boom barrier is failing to raise upon successful RFID fast-tag scan. Vehicles are queuing up. Manual override required.",
-      status: "open",
-      severity: "critical",
-      createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-      assignedTo: "Hardware Response Team"
-    },
-    {
-      id: "TKT-8901",
-      title: "ANPR Camera Offline (Network Timeout)",
-      description: "Automatic Number Plate Recognition camera #42 lost connection to the main grid. Ping timeouts occurring. Suspect POE switch failure.",
-      status: "in_progress",
-      severity: "warning",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-      assignedTo: "Network Eng - John Doe"
-    },
-    {
-      id: "TKT-8890",
-      title: "Database Latency Spikes during Peak Load",
-      description: "Redis caching layer experienced 500ms latency spikes between 08:00 and 09:00 AM. Scaling policies did not trigger.",
-      status: "resolved",
-      severity: "warning",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-      assignedTo: "SysAdmin - DevOps"
-    },
-    {
-      id: "TKT-8885",
-      title: "Scheduled Maintenance: Edge Server Firmware Update",
-      description: "Applying v2.1.4 patch to toll booth edge processing units. System will experience degraded ML anomaly detection during the 15m window.",
-      status: "closed",
-      severity: "info",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-      assignedTo: "System Update Agent"
-    }
-  ]);
+  const [tickets, setTickets] = useState<TicketData[]>([]);
   const [ragTerminalQuery, setRagTerminalQuery] = useState('');
 
   // Community Tickets
@@ -233,7 +203,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             uptime: data.uptime,
             activeVehicles: data.active_vehicles,
             latency: Math.round(data.latency),
-            sensorsOnline: data.sensors_online
+            sensorsOnline: data.sensors_online,
+            urgencyPercentage: data.urgency_percentage || 0
           });
         } catch (e) {
           // parse silently fails
@@ -242,7 +213,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       eventSource.onerror = () => {
         setBackendOnline(false);
-        setSystemHealth({ uptime: 'Offline', activeVehicles: 0, latency: 0, sensorsOnline: 0 });
+        setSystemHealth({ uptime: 'Offline', activeVehicles: 0, latency: 0, sensorsOnline: 0, urgencyPercentage: 0 });
         eventSource?.close();
       };
     };
@@ -257,29 +228,67 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [currentTollId]);
 
   const login = (token: string, userData: any) => {
-    const name = userData.name || userData.email.split('@')[0];
-    const userRole = userData.role || 'engineer';
-    
-    setUser({ email: userData.email, name, role: userRole });
+    setUser(userData);
     setIsAuthenticated(true);
-    
-    // Store both new and old auth styles to be safe
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('user_email', userData.email);
-    localStorage.setItem('user_name', name);
+    localStorage.setItem('user_name', userData.name);
+    localStorage.setItem('user_role', userData.role || 'engineer');
     localStorage.setItem('authenticated', 'true');
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    // Clear both new and old auth data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_name');
+    localStorage.removeItem('user_role');
     localStorage.removeItem('authenticated');
+  };
+
+  const createTicket = async (ticket: Omit<TicketData, 'id' | 'createdAt'>) => {
+    try {
+      // 1. Dispatch to Triage AI via standard fetch or apiClient
+      const response = await fetch('http://127.0.0.1:8000/api/triage-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: ticket.title, description: ticket.description, image_base64: ticket.imageBase64 })
+      });
+      
+      let triageData = { severity: ticket.severity, tags: ['Manual'], assignedTo: 'General SysOps' };
+      if (response.ok) {
+        triageData = await response.json();
+      }
+
+      const newTicket: TicketData = {
+        ...ticket,
+        severity: triageData.severity as any,
+        assignedTo: triageData.assignedTo,
+        id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+        createdAt: new Date().toISOString() // We could add tags if the TicketData interface supports it
+      };
+      
+      setTickets([newTicket, ...tickets]);
+    } catch (e) {
+      console.error("Triage Error", e);
+      // Fallback
+      const newTicket: TicketData = {
+        ...ticket,
+        id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+        createdAt: new Date().toISOString()
+      };
+      setTickets([newTicket, ...tickets]);
+    }
+  };
+
+  const resolveTicket = (id: string) => {
+    setTickets(tickets.map(t => t.id === id ? { ...t, status: 'resolved' } : t));
+  };
+
+  const assignTicket = (id: string, assignedTo: string) => {
+    setTickets(tickets.map(t => t.id === id ? { ...t, assignedTo } : t));
   };
 
   const submitFeedback = async (ticketQuery: string, solution: string, wasSuccessful: boolean) => {
@@ -374,6 +383,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         selectedAlert,
         setSelectedAlert,
         tickets,
+        createTicket,
+        resolveTicket,
+        assignTicket,
         ragTerminalQuery,
         setRagTerminalQuery,
         submitFeedback,

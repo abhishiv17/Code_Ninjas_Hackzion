@@ -221,7 +221,7 @@ function SignUpView({ showToast, router, onLogin, onSignUpSuccess }: { showToast
       <button 
         onClick={() => {
           showToast('Google OAuth simulated successfully. Redirecting...', 'success');
-          onLogin('google-token', { email: 'demo@google.com', name: 'Google User', role: 'engineer' });
+          onLogin('google-token', { email: 'demo@google.com', name: 'Google User', role: 'admin' });
           setTimeout(() => router.push('/dashboard'), 1000);
         }} 
         className={`w-full flex items-center justify-center gap-3 py-2.5 rounded-lg font-medium transition bg-white text-slate-800 hover:bg-slate-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700`}

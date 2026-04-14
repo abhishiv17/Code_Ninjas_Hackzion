@@ -13,11 +13,45 @@ import { Ticket, CheckCircle, Clock, AlertCircle, Filter } from 'lucide-react';
 
 export default function TicketsPage() {
   const router = useRouter();
-  const { isAuthenticated, isHydrated, tickets, sidebarOpen } = useApp();
+  const { isAuthenticated, isHydrated, tickets, createTicket, resolveTicket, assignTicket, sidebarOpen, user } = useApp();
   const { t } = useLanguage();
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all');
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  
+  // Create ticket state
+  const [isCreating, setIsCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newSeverity, setNewSeverity] = useState<'low'|'medium'|'high'|'critical'>('medium');
+  const [newImage, setNewImage] = useState<string | null>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreate = () => {
+    if (!newTitle || !newDesc) return;
+    createTicket({
+      title: newTitle,
+      description: newDesc,
+      status: 'open',
+      severity: newSeverity,
+      tollId: 'Unknown',
+      ...(newImage ? { imageBase64: newImage } : {})
+    });
+    setIsCreating(false);
+    setNewTitle('');
+    setNewDesc('');
+    setNewImage(null);
+  };
 
   useEffect(() => {
     if (isHydrated && !isAuthenticated) {
@@ -62,7 +96,7 @@ export default function TicketsPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0f172a]">
       <Sidebar />
-      <main className={`flex flex-1 flex-col h-full overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <main className={`flex flex-1 flex-col h-full overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
         <Topbar />
         <div className="flex-1 overflow-y-auto p-6 pt-24 md:p-8 md:pt-28">
           <div className="mb-8">
@@ -76,7 +110,12 @@ export default function TicketsPage() {
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Tickets ({filteredTickets.length})</h2>
-                  <Filter size={18} className="text-slate-500 dark:text-slate-400" />
+                  <div className="flex gap-2">
+                    <button onClick={() => { setIsCreating(true); setSelectedTicket(null); }} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1 font-medium shadow-sm transition">
+                      + New Ticket
+                    </button>
+                    <Filter size={18} className="text-slate-500 dark:text-slate-400 mt-0.5" />
+                  </div>
                 </div>
 
                 {/* Filter and Buttons */}
@@ -131,11 +170,57 @@ export default function TicketsPage() {
 
             {/* Ticket Details and Analysis */}
             <div className="lg:col-span-2 space-y-6">
-              {selectedTicket ? (
+              {isCreating ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/40 dark:backdrop-blur-md">
+                  <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Create Support Ticket</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ticket Title</label>
+                      <input type="text" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="e.g., RFID Reader Malfunction at Toll Alpha" className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm dark:text-white" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Severity</label>
+                      <select value={newSeverity} onChange={(e) => setNewSeverity(e.target.value as any)} className="w-full mt-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm dark:text-white">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Incident Report (Description)</label>
+                      <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Describe the issue observed in the system..." className="w-full mt-1 min-h-[120px] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm dark:text-white" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Attach Hardware Image (Optional)</label>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full mt-1 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm text-slate-500 dark:text-slate-400" />
+                      {newImage && <img src={newImage} alt="Preview" className="h-20 w-32 object-cover mt-2 rounded border border-slate-700" />}
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                       <button onClick={handleCreate} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium">Create Ticket</button>
+                       <button onClick={() => setIsCreating(false)} className="px-4 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded font-medium">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedTicket ? (
                 <>
                   {/* Ticket Info */}
                   <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
-                    <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{selectedTicket.title}</h3>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{selectedTicket.title}</h3>
+                      <div className="flex gap-2">
+                        {selectedTicket.status !== 'resolved' && (
+                          <button onClick={() => resolveTicket(selectedTicket.id)} className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded text-xs font-medium transition">
+                            Mark as Resolved
+                          </button>
+                        )}
+                        {!selectedTicket.assignedTo && (
+                          <button onClick={() => assignTicket(selectedTicket.id, user?.name || 'Engineer')} className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 rounded text-xs font-medium transition">
+                            Assign to Me
+                          </button>
+                        )}
+                      </div>
+                    </div>
                     <p className="mb-6 leading-relaxed text-slate-600 dark:text-slate-300">{selectedTicket.description}</p>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -164,8 +249,15 @@ export default function TicketsPage() {
                   {/* AI Analysis */}
                   <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-md">
                     <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">AI Analysis</h3>
+                    {selectedTicket.imageBase64 && (
+                      <div className="mb-4">
+                        <p className="text-xs text-slate-400 mb-2">Attached Hardware Image</p>
+                        <img src={selectedTicket.imageBase64} alt="Incident" className="h-32 object-contain rounded border border-slate-700" />
+                      </div>
+                    )}
                     <TicketAnalysis 
                       ticketDescription={selectedTicket.description}
+                      imageBase64={selectedTicket.imageBase64}
                       onAnalysisComplete={setAnalysisResult}
                     />
                   </div>

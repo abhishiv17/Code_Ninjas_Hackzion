@@ -15,10 +15,11 @@ export interface TicketAnalysisResult {
 
 interface TicketAnalysisProps {
   ticketDescription: string;
+  imageBase64?: string;
   onAnalysisComplete?: (result: TicketAnalysisResult) => void;
 }
 
-export function TicketAnalysis({ ticketDescription, onAnalysisComplete }: TicketAnalysisProps) {
+export function TicketAnalysis({ ticketDescription, imageBase64, onAnalysisComplete }: TicketAnalysisProps) {
   const [analysis, setAnalysis] = useState<TicketAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +34,8 @@ export function TicketAnalysis({ ticketDescription, onAnalysisComplete }: Ticket
     setError(null);
 
     try {
-      // Get LLM analysis
-      const llmAnalysis = await apiClient.analyzeTicket(ticketDescription);
+      // Get LLM analysis with Vision context
+      const llmAnalysis = await apiClient.analyzeTicket(ticketDescription, imageBase64);
 
       // Get root cause prediction
       const rootCauseAnalysis = await apiClient.predictRootCause(ticketDescription);

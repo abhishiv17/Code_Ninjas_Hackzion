@@ -49,14 +49,14 @@ class APIClient {
   /**
    * Analyze a support ticket using LLM
    */
-  async analyzeTicket(ticket: string): Promise<AnalysisResponse> {
+  async analyzeTicket(ticket: string, imageBase64?: string): Promise<AnalysisResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/analyze`, {
+      const response = await fetch(`${this.baseUrl}/api/solve-ticket`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ticket }),
+        body: JSON.stringify({ query: ticket, image_base64: imageBase64 }),
       });
 
       if (!response.ok) {
@@ -147,9 +147,10 @@ export const apiClient = new APIClient();
 /**
  * Batch API utility functions
  */
-export async function extractTicketAnalysis(ticketDescription: string) {
+export async function extractTicketAnalysis(ticketDescription: string, imageBase64?: string) {
   try {
-    const analysisResult = await apiClient.analyzeTicket(ticketDescription);
+    const analysisResult = await apiClient.analyzeTicket(ticketDescription, imageBase64);
+    // Root cause ML model is text only currently, but we pass description
     const rootCauseResult = await apiClient.predictRootCause(ticketDescription);
 
     return {

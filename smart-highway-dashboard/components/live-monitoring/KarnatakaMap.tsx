@@ -4,6 +4,25 @@ import { OrbitControls, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { useTheme } from '@/context/ThemeContext';
 
+class MapErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-xl border border-red-500/30 bg-red-500/5 text-sm text-red-400 p-6 text-center">
+          <span className="font-bold text-lg mb-2">3D Map Engine Render Error</span>
+          <p>WebGL encountered a memory limitation or context loss. The rest of the dashboard remains operational.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 interface TollLocation {
   id: number;
   x: number;
@@ -126,9 +145,11 @@ function GridNetwork({ tolls }: { tolls: TollLocation[] }) {
 export default function KarnatakaMap({
   selectedTollId,
   onTollSelect,
+  liveUrgency = 0,
 }: {
   selectedTollId: number;
   onTollSelect: (id: number) => void;
+  liveUrgency?: number;
 }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -141,8 +162,14 @@ export default function KarnatakaMap({
       const zOffset = (Math.cos(i * 78.233) * 0.5 + 0.5) * 10 - 5;
 
       let status: 'online' | 'warning' | 'offline' = 'online';
-      if (i % 7 === 0) status = 'warning';
-      if (i % 13 === 0) status = 'offline';
+      
+      if (i === selectedTollId) {
+        // Tie to live stream
+        status = liveUrgency > 70 ? 'offline' : liveUrgency > 40 ? 'warning' : 'online';
+      } else {
+        if (i % 7 === 0) status = 'warning';
+        if (i % 13 === 0) status = 'offline';
+      }
 
       list.push({
         id: i,
@@ -150,15 +177,16 @@ export default function KarnatakaMap({
         z: zOffset,
         name: `Toll Plaza ${i}`,
         status,
-        openTickets: (i * 3) % 8,
+        openTickets: i === selectedTollId ? Math.floor(liveUrgency / 10) : (i * 3) % 8,
       });
     }
     return list;
-  }, []);
+  }, [selectedTollId, liveUrgency]);
 
   return (
     <div className="relative isolate z-0 h-[400px] w-full overflow-hidden rounded-xl shadow-inner cursor-grab active:cursor-grabbing">
-      <Canvas camera={{ position: [0, 8, 10], fov: 45 }}>
+      <MapErrorBoundary>
+        <Canvas camera={{ position: [0, 8, 10], fov: 45 }}>
         <color attach="background" args={[isDark ? '#0f172a' : '#f8fafc']} />
         <ambientLight intensity={isDark ? 0.5 : 0.8} />
         <pointLight position={[10, 10, 10]} intensity={1} />
@@ -185,6 +213,7 @@ export default function KarnatakaMap({
           maxDistance={25}
         />
       </Canvas>
+      </MapErrorBoundary>
 
       <div className="pointer-events-none absolute right-4 top-4 z-[40] rounded border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 shadow-lg backdrop-blur">
         <div className="mb-1 font-bold">Node Status</div>

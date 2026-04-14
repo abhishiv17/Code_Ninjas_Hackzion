@@ -18,6 +18,7 @@ import {
 import { Activity, Radio, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
+import { useApp } from '@/context/AppContext';
 
 const KarnatakaMap = dynamic(
   () => import('@/components/live-monitoring/KarnatakaMap'),
@@ -31,7 +32,12 @@ const KarnatakaMap = dynamic(
   },
 );
 
-const TOLL_OPTIONS = Array.from({ length: 50 }, (_, i) => i + 1);
+const TOLL_OPTIONS = [
+  { id: 1, name: 'Toll Sector Alpha (ID: 1)' },
+  { id: 2, name: 'Toll Sector Bravo (ID: 2)' },
+  { id: 3, name: 'Toll Sector Charlie (ID: 3)' },
+  { id: 4, name: 'Toll Sector Delta (ID: 4)' }
+];
 
 function UrgencyGauge({ value }: { value: number }) {
   const r = 58;
@@ -106,11 +112,11 @@ function UrgencyGauge({ value }: { value: number }) {
 }
 
 export default function LiveMonitoringDashboard() {
-  const [tollId, setTollId] = useState(1);
+  const { currentTollId, setCurrentTollId, systemHealth } = useApp();
   const { t } = useLanguage();
 
-  const ticketData = useMemo(() => getTicketFlowSeries(tollId), [tollId]);
-  const urgency = useMemo(() => getUrgencyConfidence(tollId), [tollId]);
+  const ticketData = useMemo(() => getTicketFlowSeries(currentTollId), [currentTollId]);
+  const urgency = systemHealth?.urgencyPercentage || 0;
 
   return (
     <motion.div 
@@ -146,13 +152,13 @@ export default function LiveMonitoringDashboard() {
             {t('dash.tollGate')}
           </span>
           <select
-            value={tollId}
-            onChange={(e) => setTollId(Number(e.target.value))}
+            value={currentTollId}
+            onChange={(e) => setCurrentTollId(Number(e.target.value))}
             className="rounded-lg border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900 px-4 py-3 text-sm font-medium text-slate-800 dark:text-white shadow-inner outline-none ring-blue-500/0 transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
-            {TOLL_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                Toll {n}
+            {TOLL_OPTIONS.map((toll) => (
+              <option key={toll.id} value={toll.id}>
+                {toll.name}
               </option>
             ))}
           </select>
@@ -176,9 +182,9 @@ export default function LiveMonitoringDashboard() {
             <Radio className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" aria-hidden />
             {t('dash.rfidNodes')}
           </span>
-          <span className="ml-auto font-mono text-slate-500">Toll {tollId}</span>
+          <span className="ml-auto font-mono text-slate-500">Toll {currentTollId}</span>
         </div>
-        <KarnatakaMap selectedTollId={tollId} onTollSelect={setTollId} />
+        <KarnatakaMap selectedTollId={currentTollId} onTollSelect={setCurrentTollId} liveUrgency={urgency} />
       </motion.section>
 
       <motion.section 

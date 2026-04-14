@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import bcrypt
 from jose import JWTError, jwt
-from ai_engine import analyze_ticket_with_ai
+from ai_engine import analyze_ticket_with_ai, triage_with_ai
 from ml_models import predict_root_cause, detect_anomaly, predict_urgency
 from feedback import save_feedback
 from supabase import create_client, Client
@@ -136,6 +136,22 @@ class FeedbackRequest(BaseModel):
 
 class SolveTicketRequest(BaseModel):
     query: str
+    image_base64: Optional[str] = None
+
+class TriageRequest(BaseModel):
+    title: str
+    description: str
+    image_base64: Optional[str] = None
+
+class TriageResponse(BaseModel):
+    severity: str
+    tags: list
+    assignedTo: str
+
+@app.post("/api/triage-ticket", response_model=TriageResponse)
+async def triage_ticket(req: TriageRequest):
+    result = triage_with_ai(req.title, req.description, req.image_base64)
+    return result
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_ticket(req: TicketRequest):
@@ -158,7 +174,7 @@ async def submit_feedback(req: FeedbackRequest):
 @app.post("/api/solve-ticket")
 async def solve_ticket(req: SolveTicketRequest):
     try:
-        result = analyze_ticket_with_ai(req.query)
+        result = analyze_ticket_with_ai(req.query, req.image_base64)
         return {
             "status": "success",
             "response": result.get("solution", f"Ticket type: {result.get('type', 'unknown')}")

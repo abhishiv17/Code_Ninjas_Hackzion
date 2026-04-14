@@ -35,7 +35,7 @@ export default function Dashboard() {
     <div className="flex h-[100dvh] overflow-hidden bg-slate-50 dark:bg-[#0f172a]">
       <Sidebar />
       
-      <main className={`flex flex-1 flex-col h-full overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <main className={`flex flex-1 flex-col h-full overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
         <Topbar />
         
         <div className="flex flex-1 flex-col overflow-y-auto p-6 pt-24 md:p-8 md:pt-28">

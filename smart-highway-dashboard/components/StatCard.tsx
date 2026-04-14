@@ -60,7 +60,11 @@ export default function StatCard({
         {loading ? (
           <span className="text-lg text-slate-400 dark:text-slate-500">Loading...</span>
         ) : (
-          value || 'N/A'
+          value === '--' || value === '0' || value === '0ms' || value === '0%' ? (
+            <div className="h-9 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-700/50" />
+          ) : (
+            value || 'N/A'
+          )
         )}
       </div>
     </motion.div>
