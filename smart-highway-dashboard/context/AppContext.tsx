@@ -49,6 +49,7 @@ export interface CommunityTicketData {
 export interface AppContextType {
   // Authentication
   user: User | null;
+  isAuthenticated: boolean;
   isHydrated: boolean;
   login: (token: string, user: any) => void;
   logout: () => void;
@@ -91,7 +92,6 @@ export interface AppContextType {
   setSidebarOpen: (open: boolean) => void;
   slidePanelOpen: boolean;
   setSlidePanelOpen: (open: boolean) => void;
-  rehydrateAuthFromStorage: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -150,12 +150,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [slidePanelOpen, setSlidePanelOpen] = useState(false);
-
-  const rehydrateAuthFromStorage = () => {
-    const s = getInitialAuthState();
-    setUser(s.user);
-    setIsAuthenticated(s.isAuth);
-  };
 
   // Hydrate auth state from localStorage
   useEffect(() => {
@@ -358,7 +352,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSidebarOpen,
         slidePanelOpen,
         setSlidePanelOpen,
-        rehydrateAuthFromStorage,
         currentTollId,
         setCurrentTollId,
       }}

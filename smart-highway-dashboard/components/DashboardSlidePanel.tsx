@@ -59,7 +59,6 @@ export default function DashboardSlidePanel() {
     user,
     isAuthenticated,
     logout,
-    rehydrateAuthFromStorage,
     systemHealth,
     backendOnline,
   } = useApp();
@@ -99,7 +98,7 @@ export default function DashboardSlidePanel() {
       }
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      rehydrateAuthFromStorage();
+      window.location.reload();
       setMessage({ type: 'ok', text: 'Signed in successfully.' });
       setPassword('');
     } catch {
@@ -138,7 +137,7 @@ export default function DashboardSlidePanel() {
       if (data.access_token) {
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        rehydrateAuthFromStorage();
+        router.push('/login');
       }
       setMessage({ type: 'ok', text: 'Account created. You can sign in.' });
       setAuthTab('signin');

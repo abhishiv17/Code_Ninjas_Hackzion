@@ -2,23 +2,21 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 export default function Home() {
   const router = useRouter();
+  const { user, isLoading } = useUser();
 
   useEffect(() => {
-    // Check for new token-based auth first
-    const token = localStorage.getItem('token');
-    
-    // Fallback to old auth method
-    const isAuthenticated = localStorage.getItem('authenticated');
-
-    if (token || isAuthenticated === 'true') {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
+    if (!isLoading) {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
     }
-  }, [router]);
+  }, [user, isLoading, router]);
 
   return null;
 }
